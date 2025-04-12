@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/Theme-provider";
 import Navbar from "../components/Navbar/Navbar";
+import SessionWrapper from "../components/SessionWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,10 +36,12 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Navbar />
-          <Toaster position="top-center" />
+          <SessionWrapper>
+            <Navbar />
+            <Toaster position="top-center" />
 
-          {children}
+            {children}
+          </SessionWrapper>
         </ThemeProvider>
       </body>
     </html>

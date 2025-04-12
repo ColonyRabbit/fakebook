@@ -10,7 +10,7 @@ export interface SearchResultsProps {
   id: string;
   username: string;
   name?: string;
-  photo?: string;
+  photoUrl?: string;
 }
 const Search = () => {
   //usePathname
@@ -61,6 +61,7 @@ const Search = () => {
           }),
         });
         const data = await response.json();
+        console.log(data);
         setSearchResults(data);
         setIsDropdownOpen(true);
       } catch (error) {
@@ -115,11 +116,11 @@ const Search = () => {
                 key={user.id}
               >
                 <div className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors duration-150 cursor-pointer border-b border-gray-100 last:border-b-0">
-                  {user.photo ? (
+                  {user.photoUrl ? (
                     <Image
                       width={40}
                       height={40}
-                      src={user.photo}
+                      src={user.photoUrl}
                       alt={user.username}
                       className="w-10 h-10 rounded-full object-cover border border-gray-200"
                     />

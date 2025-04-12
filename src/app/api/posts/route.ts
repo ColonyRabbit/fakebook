@@ -27,7 +27,7 @@ export async function GET(request: Request) {
           select: {
             id: true,
             username: true,
-            photo: true,
+            photoUrl: true,
           },
         },
         // นับจำนวน likes ทั้งหมดของโพสต์
@@ -56,6 +56,7 @@ export async function GET(request: Request) {
     // แปลงข้อมูลให้มีรูปแบบที่ต้องการ
     const formattedPosts = posts.map((post) => ({
       id: post.id,
+      photoUrl: post.user.photoUrl,
       postText: post.postText,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
