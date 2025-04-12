@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String    @id @default(cuid())
+  postText  String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  likes     Like[]
+  comments  Comment[]
+
+  @@index([userId])
+}
+
+model User {
+  id        String     @id @default(cuid())
+  username  String     @unique
+  email     String     @unique
+  password  String
+  photo     String?
+  posts     Post[]
+  likes     Like[]
+  // ถ้าไม่มี createdAt และ updatedAt ให้เพิ่มบรรทัดด้านล่างนี้
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  Comment   Comment[]
+  followers Follower[] @relation("UserFollowing")
+  following Follower[] @relation("UserFollowers")
+}
+
+model Follower {
+  id          String   @id @default(cuid())
+  follower    User     @relation("UserFollowing", fields: [followingId], references: [id])
+  followerId  String
+  following   User     @relation("UserFollowers", fields: [followerId], references: [id])
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+model Comment {
+  id          String   @id @default(cuid())
+  commentText String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String
+  postId      String
+  user        User     @relation(fields: [userId], references: [id])
+  post        Post     @relation(fields: [postId], references: [id])
+
+  @@index([userId])
+  @@index([postId])
+}
+
+model Like {
+  userId String
+  postId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([userId])
+  @@index([postId])
+}
