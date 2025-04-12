@@ -2,72 +2,63 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import prisma from "../../../../lib/prisma";
-import { cookies } from "next/headers";
-
-// กำหนด secret key สำหรับการเข้ารหัส JWT
-// ควรเก็บไว้ใน environment variable
-const JWT_SECRET = process.env.JWT_SECRET || "your-super-secret-jwt-key";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    // รับข้อมูลจาก client ผ่าน JSON
+    const { email, password } = await request.json();
 
-    // ค้นหาผู้ใช้จาก email
-    const user = await prisma.user.findUnique({
-      where: {
-        email: email,
-      },
-    });
-
-    // ถ้าไม่พบผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    // ค้นหาผู้ใช้ตาม email ในฐานข้อมูลด้วย Prisma
+    const user = await prisma.user.findUnique({ where: { email } });
+    console.log("User found in database:", user); // สำหรับดีบัก
+    // หากไม่พบผู้ใช้หรือรหัสผ่านไม่ถูกต้อง ให้ส่ง error กลับไป
+    if (!user) {
+      console.log("Login failed: user not found");
       return NextResponse.json(
-        { error: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" },
+        { error: "login_error", error_msg: "รหัสไม่ถูกต้อง!" },
         { status: 401 }
       );
     }
 
-    // สร้าง payload สำหรับ JWT token
-    const payload = {
-      userId: user.id,
-      username: user.username,
-      email: user.email,
-    };
+    // ใช้ bcrypt เปรียบเทียบ password แบบ asynchronous
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      console.log("Login failed: invalid password for user", user.email);
+      return NextResponse.json(
+        { error: "login_error", error_msg: "รหัสไม่ถูกต้อง!" },
+        { status: 401 }
+      );
+    }
 
-    // สร้าง JWT token
-    const token = jwt.sign(payload, JWT_SECRET, {
-      expiresIn: "7d", // token หมดอายุใน 7 วัน
-    });
+    // สร้าง JWT access token ด้วยข้อมูลที่ต้องการเก็บลงใน token
+    const accessToken = jwt.sign(
+      {
+        sub: user.id,
+        email: user.email,
+      },
+      process.env.JWT_SECRET as string, // ระบุว่า JWT_SECRET ต้องไม่เป็น undefined
+      { expiresIn: "7d" }
+    );
+    console.log("User found:", user); // สำหรับดีบัก
 
-    // ตั้งค่า cookie
-    (
-      await // ตั้งค่า cookie
-      cookies()
-    ).set({
-      name: "authToken", // เปลี่ยนชื่อ cookie เป็น authToken
-      value: token,
-      httpOnly: true,
-      path: "/",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
-
-    // ส่งข้อมูลผู้ใช้กลับไป (ไม่รวมรหัสผ่าน)
-    const userWithoutPassword = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-    };
-
-    return NextResponse.json({
-      message: "เข้าสู่ระบบสำเร็จ",
-      user: userWithoutPassword,
-    });
+    // ส่งข้อมูลผู้ใช้ (รวมทั้ง id ที่ได้จาก database) พร้อม accessToken กลับไป
+    return NextResponse.json(
+      {
+        id: user.id,
+        name: user.username,
+        email: user.email,
+        photoUrl: user!.photoUrl,
+        accessToken,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการเข้าสู่ระบบ" },
+      {
+        error: "server_error",
+        error_msg: "เกิดข้อผิดพลาดในระบบ",
+      },
       { status: 500 }
     );
   }

@@ -7,7 +7,7 @@ export async function generateMetadata({
   params: { username: string };
 }) {
   return {
-    title: `โปรไฟล์ผู้ใช้ ${params.username}`,
+    title: `${params.username}`,
     description:
       "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
   };

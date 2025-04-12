@@ -79,21 +79,13 @@ const IndexRegister = () => {
       setPreviewUrl(e.dataTransfer.files[0]);
     }
   };
-  const convertFileToBase64 = (file: File) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = (error) => reject(error);
-    });
-  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       // ตรวจสอบข้อมูลด้วย Zod
       const result = formSchema.safeParse(data);
-
       if (!result.success) {
         // จัดการกับข้อผิดพลาดจาก Zod
         const fieldErrors: Partial<RegisterType> = {};
@@ -107,50 +99,41 @@ const IndexRegister = () => {
 
       // ล้างข้อผิดพลาด
       setErrors({});
-
-      // แสดงสถานะกำลังโหลด (ถ้าต้องการ)
       setIsLoading(true);
-      let photoBase64 = null;
+      //เก็บภาพที่เลือกใน previewUrl ที่ s3
+      // สร้าง FormData object ขึ้นมา
+      const formData = new FormData();
+      formData.append("username", data.username);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+      formData.append("confirmPassword", data.confirmPassword);
       if (previewUrl) {
-        photoBase64 = await convertFileToBase64(previewUrl);
+        // "profileImage" คือชื่อ field ที่ใช้ส่งไฟล์ไปยัง API Endpoint
+        formData.append("profileImage", previewUrl);
       }
-      // ส่งข้อมูลไปยัง API
+
+      // ส่งข้อมูลผ่าน API โดยใช้ FormData (อย่าระบุ header Content-Type)
       const response = await fetch("/api/register", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: data.username,
-          email: data.email,
-          password: data.password,
-          photo: photoBase64,
-        }),
+        body: formData,
       });
 
       const responseData = await response.json();
-
+      console.log("Response from API:", responseData); // ตรวจสอบการตอบกลับจาก API
       if (!response.ok) {
-        // จัดการกับข้อผิดพลาดจาก API
         setExistUser(responseData.error);
-        // throw new Error(responseData.error);
-      } else if (response.ok) {
+      } else {
         // ลงทะเบียนสำเร็จ
-        console.log("ลงทะเบียนสำเร็จ:", responseData);
-
-        // เปลี่ยนเส้นทางไปยังหน้าเข้าสู่ระบบหรือหน้าหลัก
         router.push("/login?registered=true");
       }
     } catch (error) {
       console.error("เกิดข้อผิดพลาด:", error);
-      // แสดงข้อความข้อผิดพลาด
       setGlobalError(
         error instanceof Error
           ? error.message
           : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
       );
     } finally {
-      // ปิดสถานะกำลังโหลด
       setIsLoading(false);
     }
   };

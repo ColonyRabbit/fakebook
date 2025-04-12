@@ -13,6 +13,7 @@ const nextConfig: NextConfig = {
       "assets.aceternity.com",
       "images.unsplash.com",
       "thumbs.dreamstime.com",
+      "fake-book.s3.ap-southeast-1.amazonaws.com",
     ],
   },
   env: {

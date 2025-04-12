@@ -1,12 +1,11 @@
 "use client";
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
-import { PostType } from "../../../type/postType";
-import { getCurrentUser } from "../../../../../lib/auth";
+import { getSession } from "next-auth/react";
 
 const Feet = () => {
   //local state
-  const [posts, setPosts] = useState<PostType[]>([]);
+  const [posts, setPosts] = useState<>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -16,8 +15,8 @@ const Feet = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
+        const session = await getSession();
+        setCurrentUser(session);
       } catch (err) {
         console.error("Error fetching user:", err);
       }
@@ -121,7 +120,7 @@ const Feet = () => {
           <div key={post.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                {post.user?.photo ? (
+                {post.photoUrl ? (
                   <Image
                     className="rounded-full w-10 h-10"
                     width={40}
@@ -131,9 +130,8 @@ const Feet = () => {
                       "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
                     }
                     src={
-                      post.user?.photo
-                        ? post.user.photo
-                        : "/image/freephoto.jpg"
+                      post.photoUrl ||
+                      "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
                     }
                   />
                 ) : (
