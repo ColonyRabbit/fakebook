@@ -27,8 +27,9 @@ const Navbar = () => {
           {session ? (
             <>
               <Button
+                variant="default"
                 onClick={() => signOut()}
-                className="text-sm font-medium dark:text-gray-200 hover:underline"
+                className="text-sm font-medium"
               >
                 Logout
               </Button>
@@ -50,10 +51,11 @@ const Navbar = () => {
           ) : (
             <>
               <Button
+                variant="default"
                 onClick={() => signIn()}
-                className="text-sm font-medium  dark:text-gray-200 hover:underline"
+                className="text-sm font-medium "
               >
-                <span className="sr-only">Login</span>
+                <span className="">Login</span>
               </Button>
             </>
           )}

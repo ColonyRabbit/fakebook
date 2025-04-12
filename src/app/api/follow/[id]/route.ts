@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../../lib/prisma";
-import { getSession } from "next-auth/react";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../../../api/auth/[...nextauth]/route";
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getSession();
-    const targetUserId = params.id;
-    console.log(session);
+    const session = await getServerSession(authOptions);
+
+    // ถ้าไม่พบ session => ส่ง 401 (Unauthorized) กลับ
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const targetUserId = params.id;
 
     const existingUser = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -36,30 +39,31 @@ export async function POST(
       );
     }
 
-    // ตรวจสอบก่อนว่าเคยติดตามไปแล้วหรือยัง
     const existingFollow = await prisma.follower.findUnique({
       where: {
         followerId_followingId: {
-          followerId: session.user.id, // คนที่กดติดตาม
-          followingId: targetUserId, // คนที่ถูกติดตาม
+          followerId: session.user.id,
+          followingId: targetUserId,
         },
       },
     });
 
     if (existingFollow) {
-      return NextResponse.json({ error: "Already following" }, { status: 400 });
+      return NextResponse.json(
+        { alreadyFollowing: true, message: "Already following" },
+        { status: 200 }
+      );
     }
 
-    // สร้างข้อมูลการติดตามใหม่ (แก้ไขตรงนี้ให้ถูกต้อง)
     await prisma.follower.create({
       data: {
-        followerId: session.user.id, // คนที่กดติดตาม
-        followingId: targetUserId, // คนที่ถูกติดตาม
+        followerId: session.user.id,
+        followingId: targetUserId,
       },
     });
 
     return NextResponse.json({ message: "Followed successfully" });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error following user:", error);
     return NextResponse.json(
       { error: "Failed to follow user", details: error.message },

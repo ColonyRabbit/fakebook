@@ -4,7 +4,6 @@
 import { useState, useRef } from "react";
 import { ImageIcon, Smile, Camera } from "lucide-react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 
