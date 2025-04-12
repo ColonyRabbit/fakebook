@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "../../../../../lib/auth";
 import prisma from "../../../../../lib/prisma";
+import { getSession } from "next-auth/react";
 
 export async function POST(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getSession();
     const targetUserId = params.id;
-    const currentUser = await getCurrentUser();
-
-    if (!currentUser || !currentUser.id) {
+    console.log(session);
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const existingUser = await prisma.user.findUnique({
-      where: { id: currentUser.id },
+      where: { id: session.user.id },
     });
 
     if (!existingUser) {
@@ -40,7 +40,7 @@ export async function POST(
     const existingFollow = await prisma.follower.findUnique({
       where: {
         followerId_followingId: {
-          followerId: currentUser.id, // คนที่กดติดตาม
+          followerId: session.user.id, // คนที่กดติดตาม
           followingId: targetUserId, // คนที่ถูกติดตาม
         },
       },
@@ -53,13 +53,13 @@ export async function POST(
     // สร้างข้อมูลการติดตามใหม่ (แก้ไขตรงนี้ให้ถูกต้อง)
     await prisma.follower.create({
       data: {
-        followerId: currentUser.id, // คนที่กดติดตาม
+        followerId: session.user.id, // คนที่กดติดตาม
         followingId: targetUserId, // คนที่ถูกติดตาม
       },
     });
 
     return NextResponse.json({ message: "Followed successfully" });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error following user:", error);
     return NextResponse.json(
       { error: "Failed to follow user", details: error.message },

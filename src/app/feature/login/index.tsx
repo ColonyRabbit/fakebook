@@ -8,7 +8,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
 import { toast } from "react-hot-toast";
-
+import { signIn } from "next-auth/react";
 export default function IndexLogin() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -38,7 +38,6 @@ export default function IndexLogin() {
   const validateForm = () => {
     let valid = true;
     const newErrors = { ...errors };
-
     if (!formData.email) {
       newErrors.email = "กรุณากรอกอีเมล";
       valid = false;
@@ -58,36 +57,22 @@ export default function IndexLogin() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsLoading(true); // เริ่มโหลด
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
+    const result = await signIn("credentials", {
+      redirect: false, // ❗️สำคัญ เพื่อให้จัดการ redirect เอง
+      email: formData.email,
+      password: formData.password,
+    });
 
-    try {
-      const response = await fetch("/api/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "เข้าสู่ระบบล้มเหลว");
-      }
-
-      toast.success("เข้าสู่ระบบสำเร็จ");
-      router.push("/"); // นำทางไปยังหน้า Dashboard หลังจากเข้าสู่ระบบสำเร็จ
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("An unknown error occurred");
-      }
-    } finally {
+    if (result?.error) {
+      toast.error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
+    } else {
+      toast.success("เข้าสู่ระบบสำเร็จ!");
       setIsLoading(false);
+      router.push("/"); // หรือ path ที่ต้องการ
     }
   };
 
@@ -96,13 +81,13 @@ export default function IndexLogin() {
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div className="text-center">
           <div className="flex justify-center">
-            <Image
+            {/* <Image
               src="/logo.png"
               alt="Logo"
               width={80}
               height={80}
               className="mx-auto"
-            />
+            /> */}
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             เข้าสู่ระบบ

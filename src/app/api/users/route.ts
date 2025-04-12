@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         id: true,
         username: true,
         email: true,
-        photo: true,
+        photoUrl: true,
       },
       take: 10, // จำกัดจำนวนผลลัพธ์เพื่อประสิทธิภาพ
     });
