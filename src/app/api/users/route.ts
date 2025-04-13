@@ -14,16 +14,14 @@ export async function POST(request: NextRequest) {
 
     const users = await prisma.user.findMany({
       where: {
-        OR: [
-          { username: { contains: searchText, mode: "insensitive" } },
-          // { email: { contains: searchText, mode: "insensitive" } },
-        ],
+        OR: [{ username: { contains: searchText, mode: "insensitive" } }],
       },
       select: {
         id: true,
         username: true,
         email: true,
         photoUrl: true,
+        followers: true,
       },
       take: 10, // จำกัดจำนวนผลลัพธ์เพื่อประสิทธิภาพ
     });
