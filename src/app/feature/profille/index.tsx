@@ -24,19 +24,10 @@ import {
   TabsTrigger,
 } from "../../../../@/components/ui/tabs";
 
-interface User {
-  id: string;
-  username: string;
-  email: string;
-  photoUrl: string;
-  followers: { id: string }[];
-  following: { id: string }[];
-}
-
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<any>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
@@ -83,10 +74,12 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (session && id) fetchUser();
+    console.log("user>>>>", user);
   }, [session, id]);
 
   useEffect(() => {
     if (user?.id && session) fetchFollower();
+    console.log("user>>>>", user);
   }, [user?.id, session]);
 
   const handleFollow = async (targetUserId: string) => {
@@ -298,9 +291,43 @@ const IndexProfile = ({ id }: { id: string }) => {
         <TabsContent value="followers" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">ผู้ติดตาม</h3>
-            <p className="text-muted-foreground text-center py-8">
-              ยังไม่มีผู้ติดตามในขณะนี้
-            </p>
+            {user.followers.length > 0 ? (
+              <div className="space-y-4">
+                {user.followers.map((relation) => (
+                  <div
+                    key={relation.followerId}
+                    className="flex items-center gap-4"
+                  >
+                    <div className="flex-shrink-0">
+                      {relation.follower.photoUrl ? (
+                        <Image
+                          src={relation.follower.photoUrl}
+                          alt={relation.follower.username}
+                          width={48}
+                          height={48}
+                          className="rounded-full ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-800"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-sm font-bold text-gray-500">
+                            {relation.follower.username.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold">
+                        {relation.follower.username}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">
+                ยังไม่มีผู้ติดตามในขณะนี้
+              </p>
+            )}
           </Card>
         </TabsContent>
       </Tabs>
