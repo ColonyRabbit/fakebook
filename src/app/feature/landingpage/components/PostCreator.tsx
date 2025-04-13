@@ -1,11 +1,12 @@
 // components/PostCreator.tsx (หรือในที่ที่คุณเก็บ component นี้)
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ImageIcon, Smile, Camera } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { User } from "@prisma/client";
 
 export default function PostCreator() {
   const { data: session, status } = useSession();
@@ -14,7 +15,29 @@ export default function PostCreator() {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [user, setUser] = useState<User>();
 
+  useEffect(() => {
+    if (session?.user?.id) {
+      const fetchUser = async () => {
+        try {
+          const response = await fetch(`/api/users/${session.user.id}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await response.json();
+          if (data) {
+            setUser(data);
+          }
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        }
+      };
+      fetchUser();
+    }
+  }, [session?.user?.id]); // Fetch new user data when session changes
   const handleCreatePost = async () => {
     if (!content.trim()) return;
     setIsLoading(true);
@@ -54,13 +77,13 @@ export default function PostCreator() {
       <div className="flex items-center space-x-2 mb-3">
         {/* รูปโปรไฟล์ผู้ใช้ */}
         <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center">
-          {session.user.photoUrl ? (
+          {user?.photoUrl ? (
             <Image
-              src={session.user.photoUrl}
+              src={user?.photoUrl}
               className="rounded-full w-10 h-10"
               width={40}
               height={40}
-              alt={`${session.user.name}'s avatar`}
+              alt={`${user?.username}'s avatar`}
             />
           ) : (
             // แสดง placeholder ถ้าไม่มีรูป
