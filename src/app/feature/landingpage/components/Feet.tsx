@@ -2,10 +2,11 @@
 import Image from "next/image";
 import React, { useState, useEffect } from "react";
 import { getSession } from "next-auth/react";
+import Link from "next/link";
 
 const Feet = () => {
   //local state
-  const [posts, setPosts] = useState<>([]);
+  const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -119,33 +120,35 @@ const Feet = () => {
         {posts?.map((post) => (
           <div key={post.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                {post.photoUrl ? (
-                  <Image
-                    className="rounded-full w-10 h-10"
-                    width={40}
-                    height={40}
-                    alt={
-                      post.username ||
-                      "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
-                    }
-                    src={
-                      post.photoUrl ||
-                      "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
-                    }
-                  />
-                ) : (
-                  <div className="rounded-full bg-gray-200 w-10 h-10 flex items-center justify-center">
-                    <span className="text-gray-500">No Image</span>
-                  </div>
-                )}
-                <p>{post.username || post.user?.username || "Anonymous"}</p>
-              </h3>
+              <Link href={`/profile/${post.user?.id}`}>
+                <h3 className="font-medium text-gray-800 flex items-center gap-2">
+                  {post.photoUrl ? (
+                    <Image
+                      className="rounded-full w-10 h-10"
+                      width={40}
+                      height={40}
+                      alt={
+                        post.username ||
+                        "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
+                      }
+                      src={
+                        post.photoUrl ||
+                        "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
+                      }
+                    />
+                  ) : (
+                    <div className="rounded-full bg-gray-200 w-10 h-10 flex items-center justify-center">
+                      <span className="text-gray-500">No Image</span>
+                    </div>
+                  )}
+                  <p>{post.user?.username || "Anonymous"}</p>
+                </h3>
+              </Link>
               <span className="text-sm text-gray-500">
                 {new Date(post.createdAt).toLocaleDateString()}
               </span>
             </div>
-            <p className="text-gray-700 leading-relaxed">{post.postText}</p>
+            <p className="text-gray-700 leading-relaxed">{post.content}</p>
 
             <div className="mt-4 pt-3 border-t border-gray-100 flex space-x-4">
               <button

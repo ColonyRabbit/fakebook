@@ -1,18 +1,13 @@
-// app/profile/[id]/page.tsx (Server Component)
 import IndexProfile from "../../feature/profille";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { username: string };
-}) {
+export async function generateMetadata({ params }: { params: { id: string } }) {
   return {
-    title: `${params.username}`,
+    title: await `${params.id}`,
     description:
       "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
   };
 }
 
-export default function Page({ params }: { params: { username: string } }) {
-  return <IndexProfile username={params.username} />;
+export default function Page({ params }: { params: { id: string } }) {
+  return <IndexProfile id={params.id} />;
 }

@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       take: limit,
       select: {
         id: true,
-        postText: true,
+        content: true,
         createdAt: true,
         updatedAt: true,
         userId: true,
@@ -57,7 +57,7 @@ export async function GET(request: Request) {
     const formattedPosts = posts.map((post) => ({
       id: post.id,
       photoUrl: post.user.photoUrl,
-      postText: post.postText,
+      content: post.content,
       createdAt: post.createdAt,
       updatedAt: post.updatedAt,
       userId: post.userId,
@@ -88,10 +88,10 @@ export async function GET(request: Request) {
 }
 export async function POST(request: Request) {
   try {
-    const { postText, userId } = await request.json();
+    const { content, userId } = await request.json();
 
-    // ตรวจสอบว่ามี postText และ userId หรือไม่
-    if (!postText || !userId) {
+    // ตรวจสอบว่ามี content และ userId หรือไม่
+    if (!content || !userId) {
       return NextResponse.json(
         { error: "โพสต์ล้มเหลว กรุณาลองใหม่อีกครั้ง" },
         { status: 400 }
@@ -101,7 +101,7 @@ export async function POST(request: Request) {
     // สร้างโพสต์ใหม่ในฐานข้อมูล
     const newPost = await prisma.post.create({
       data: {
-        postText,
+        content,
         userId,
       },
     });

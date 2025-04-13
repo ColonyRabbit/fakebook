@@ -7,12 +7,18 @@ import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { CiSettings } from "react-icons/ci";
 
 const Navbar = () => {
+  //useRuter
+  const route = useRouter();
+  //usePathName
+  const pathName = usePathname();
+  console.log(pathName);
   const { data: session } = useSession();
-  console.log("Session data:", session); // สำหรับดีบัก
   return (
-    <div className="w-full px-6 py-4 shadow-sm bg-white dark:bg-gray-900 sticky top-0 z-50">
+    <div className="w-full px-6 py-4 shadow-sm bg-white dark:bg-[#375b93] sticky top-0 z-50 drop-shadow-2xl">
       <div className="max-w-7xl mx-auto grid grid-cols-3 items-center">
         <div className="flex items-center">
           <Logo />
@@ -25,16 +31,17 @@ const Navbar = () => {
         <div className="flex items-center justify-end gap-3">
           <ThemeToggle />
           {session ? (
-            <>
+            <div className="ml-auto flex gap-4 items-center">
               <Button
+                variant="default"
                 onClick={() => signOut()}
-                className="text-sm font-medium dark:text-gray-200 hover:underline"
+                className="text-sm font-medium"
               >
                 Logout
               </Button>
               {session.user.photoUrl && (
                 <Link
-                  href={`/profile/${session.user.name}`}
+                  href={`/profile/${session.user.id}`}
                   className="relative inline-block"
                 >
                   <Image
@@ -46,15 +53,35 @@ const Navbar = () => {
                   />
                 </Link>
               )}
-            </>
+              {pathName === `/profile/${session.user.id}` &&
+                session.user.id && (
+                  <div className="flex-1 mt-6 lg:mt-0">
+                    <Button
+                      onClick={() =>
+                        route.push(`/profile/${session.user.id}/setting`)
+                      }
+                    >
+                      <CiSettings />
+                    </Button>
+                  </div>
+                )}
+            </div>
           ) : (
             <>
               <Button
+                variant="default"
                 onClick={() => signIn()}
-                className="text-sm font-medium  dark:text-gray-200 hover:underline"
+                className="text-sm font-medium "
               >
-                <span className="sr-only">Login</span>
+                <span className="">Login</span>
               </Button>
+              {!session && (
+                <Link href="/register">
+                  <Button variant="default" className="text-sm font-medium ">
+                    <span className="">Register</span>
+                  </Button>
+                </Link>
+              )}
             </>
           )}
         </div>
