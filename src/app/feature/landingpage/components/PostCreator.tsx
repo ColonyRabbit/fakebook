@@ -10,20 +10,20 @@ import Image from "next/image";
 export default function PostCreator() {
   const { data: session, status } = useSession();
 
-  const [postText, setPostText] = useState("");
+  const [content, setContent] = useState<string>("");
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleCreatePost = async () => {
-    if (!postText.trim()) return;
+    if (!content.trim()) return;
     setIsLoading(true);
     try {
       const response = await fetch("/api/posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          postText: postText,
+          content: content,
           userId: session?.user.id, // ใช้ user id จาก session
         }),
       });
@@ -35,7 +35,7 @@ export default function PostCreator() {
       }
 
       toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
-      setPostText("");
+      setContent("");
       setIsExpanded(false);
     } catch (error) {
       toast.error(
@@ -74,8 +74,8 @@ export default function PostCreator() {
         >
           {isExpanded ? (
             <textarea
-              value={postText}
-              onChange={(e) => setPostText(e.target.value)}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
               placeholder="คุณกำลังคิดอะไรอยู่?"
               className="w-full bg-transparent border-none focus:outline-none resize-none"
               rows={3}
@@ -115,12 +115,12 @@ export default function PostCreator() {
           <div className="mt-3 flex justify-end">
             <button
               className={`px-4 py-1.5 rounded-md font-medium ${
-                postText.trim()
+                content.trim()
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-200 text-gray-400 cursor-not-allowed"
               }`}
               onClick={handleCreatePost}
-              disabled={!postText.trim() || isLoading}
+              disabled={!content.trim() || isLoading}
             >
               {isLoading ? (
                 <svg

@@ -120,7 +120,7 @@ const Feet = () => {
         {posts?.map((post) => (
           <div key={post.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
             <div className="flex justify-between items-center mb-3">
-              <Link href={`/profile/${post.user?.username}`}>
+              <Link href={`/profile/${post.user?.id}`}>
                 <h3 className="font-medium text-gray-800 flex items-center gap-2">
                   {post.photoUrl ? (
                     <Image
@@ -148,7 +148,7 @@ const Feet = () => {
                 {new Date(post.createdAt).toLocaleDateString()}
               </span>
             </div>
-            <p className="text-gray-700 leading-relaxed">{post.postText}</p>
+            <p className="text-gray-700 leading-relaxed">{post.content}</p>
 
             <div className="mt-4 pt-3 border-t border-gray-100 flex space-x-4">
               <button
