@@ -86,3 +86,109 @@ export async function POST(request: Request) {
     );
   }
 }
+export async function PATCH(request: Request) {
+  try {
+    // ตรวจสอบ session ก่อน
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // แก้ไขให้ใช้ชื่อ postId แทน userId เพราะเราต้องการอัปเดตโพสต์
+    const { content, postId } = await request.json();
+
+    if (!postId || !content) {
+      return NextResponse.json(
+        { error: "postId and content are required" },
+        { status: 400 }
+      );
+    }
+
+    // ตรวจสอบว่ามีโพสต์ที่ต้องการอัปเดตอยู่หรือไม่
+    const existingPost = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // ตรวจสอบว่าผู้ใช้ที่ล็อกอินเป็นเจ้าของโพสต์หรือไม่
+    if (existingPost.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "You are not authorized to update this post" },
+        { status: 403 }
+      );
+    }
+
+    // อัปเดตโพสต์ใหม่
+    const updatedPost = await prisma.post.update({
+      where: { id: postId },
+      data: {
+        content,
+      },
+    });
+
+    return NextResponse.json(
+      { message: "Post updated successfully", updatedPost },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error in PATCH request:", error);
+    return NextResponse.json(
+      { error: error.message || "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
+//delete
+export async function DELETE(request: Request) {
+  try {
+    // ตรวจสอบ session ก่อน
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { postId } = await request.json();
+
+    if (!postId) {
+      return NextResponse.json(
+        { error: "postId  are required" },
+        { status: 400 }
+      );
+    }
+
+    const existingPost = await prisma.post.findUnique({
+      where: { id: postId },
+    });
+
+    if (!existingPost) {
+      return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
+
+    // ตรวจสอบว่าผู้ใช้ที่ล็อกอินเป็นเจ้าของโพสต์หรือไม่
+    if (existingPost.userId !== session.user.id) {
+      return NextResponse.json(
+        { error: "You are not authorized to update this post" },
+        { status: 403 }
+      );
+    }
+
+    // อัปเดตโพสต์ใหม่
+    const updatedPost = await prisma.post.delete({
+      where: { id: postId },
+    });
+
+    return NextResponse.json(
+      { message: "Post Delete successfully", updatedPost },
+      { status: 200 }
+    );
+  } catch (error: any) {
+    console.error("Error in PATCH request:", error);
+    return NextResponse.json(
+      { error: error.message || "An error occurred" },
+      { status: 500 }
+    );
+  }
+}
