@@ -9,11 +9,11 @@ datasource db {
 
 model Post {
   id        String    @id @default(cuid())
-  postText  String
+  content   String
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   userId    String
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     Like[]
   comments  Comment[]
 
@@ -28,35 +28,42 @@ model User {
   photoUrl  String?
   posts     Post[]
   likes     Like[]
+  // คนที่ติดตามผู้ใช้นี้ (target user ที่ถูก follow)
+  followers Follower[] @relation("UserFollowers")
+  // คนที่ผู้ใช้นี้ติดตาม (current user's following list)
+  following Follower[] @relation("UserFollowing")
+  comments  Comment[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  Comment   Comment[]
-  followers Follower[] @relation("UserFollowing")
-  following Follower[] @relation("UserFollowers")
 }
 
 model Follower {
-  id          String   @id @default(cuid())
-  follower    User     @relation("UserFollowing", fields: [followingId], references: [id])
+  /// ID ของผู้ใช้ที่ติดตาม (ผู้ติดตาม)
   followerId  String
-  following   User     @relation("UserFollowers", fields: [followerId], references: [id])
+  /// ID ของผู้ใช้ที่ถูกติดตาม (target)
   followingId String
-  createdAt   DateTime @default(now())
 
-  @@unique([followerId, followingId])
+  /// ความสัมพันธ์ที่แสดงว่าผู้ใช้ที่เป็น "follower" หมายถึงผู้ที่ติดตามคนอื่น
+  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
+  /// ความสัมพันธ์ที่แสดงว่าผู้ใช้ที่เป็น "following" หมายถึงผู้ที่ถูกติดตาม 
+  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@id([followerId, followingId])
   @@index([followerId])
   @@index([followingId])
 }
 
 model Comment {
-  id          String   @id @default(cuid())
-  commentText String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String
-  postId      String
-  user        User     @relation(fields: [userId], references: [id])
-  post        Post     @relation(fields: [postId], references: [id])
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([postId])

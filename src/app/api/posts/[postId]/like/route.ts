@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCurrentUser } from "../../../../../../lib/auth";
 import prisma from "../../../../../../lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../auth/[...nextauth]/route";
 
 // เปลี่ยนจาก params เป็น context.params และใช้ async/await อย่างถูกต้อง
 export async function POST(
@@ -9,8 +10,8 @@ export async function POST(
 ) {
   try {
     // ตรวจสอบว่ามีผู้ใช้ที่ล็อกอินอยู่หรือไม่
-    const currentUser = await getCurrentUser();
-    if (!currentUser || !currentUser.id) {
+    const session = await getServerSession(authOptions);
+    if (!session) {
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -19,7 +20,7 @@ export async function POST(
 
     // ใช้ context.params แทน params
     const postId = context.params.postId.toString();
-    const userId = currentUser.id;
+    const userId = session.id;
 
     // ตรวจสอบว่าโพสต์มีอยู่จริงหรือไม่
     const post = await prisma.post.findUnique({
@@ -67,7 +68,6 @@ export async function POST(
           select: {
             id: true,
             username: true,
-            photo: true,
           },
         },
         likes: true,
@@ -86,7 +86,7 @@ export async function POST(
     // ส่งข้อมูลกลับไปยัง client
     return NextResponse.json({
       id: updatedPost?.id,
-      postText: updatedPost?.postText,
+      content: updatedPost?.content,
       createdAt: updatedPost?.createdAt,
       updatedAt: updatedPost?.updatedAt,
       username: updatedPost?.user?.username,
