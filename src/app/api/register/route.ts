@@ -6,28 +6,34 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 export async function POST(request: Request) {
   try {
     const formData = await request.formData();
+    const userId = formData.get("userId")?.toString();
     const username = formData.get("username")?.toString();
     const email = formData.get("email")?.toString();
     const password = formData.get("password")?.toString();
-    const file = formData.get("profileImage") as File | null;
-    if (!username || !email || !password) {
+    const file = formData.get("profileImage") as File | null | string;
+
+    if (!userId || !username || !email) {
       return NextResponse.json({ error: "ข้อมูลไม่ครบถ้วน" }, { status: 400 });
     }
-    const existingUser = await prisma.user.findFirst({
-      where: { OR: [{ email }, { username }] },
+
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
     });
-    if (existingUser) {
-      return NextResponse.json(
-        { error: "อีเมลหรือชื่อผู้ใช้นี้มีอยู่แล้ว" },
-        { status: 400 }
-      );
+
+    if (!existingUser) {
+      return NextResponse.json({ error: "ผู้ใช้ไม่พบ" }, { status: 404 });
     }
-    const hashedPassword = await bcrypt.hash(password, 10);
-    let photoUrl = null;
-    if (file) {
-      const s3Url = process.env.AWS_S3_URL;
+
+    let hashedPassword = existingUser.password;
+    if (password) {
+      hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    let photoUrl = existingUser.photoUrl;
+    if (file instanceof File) {
       const fileName = `uploads/${Date.now()}-${file.name}`;
       const fileBuffer = Buffer.from(await file.arrayBuffer());
+
       const s3Client = new S3Client({
         region: process.env.AWS_REGION,
         credentials: {
@@ -35,28 +41,39 @@ export async function POST(request: Request) {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
         },
       });
+
       const params = {
         Bucket: process.env.AWS_S3_BUCKET,
         Key: fileName,
         Body: fileBuffer,
         ContentType: file.type,
       };
+
       const command = new PutObjectCommand(params);
       await s3Client.send(command);
-      photoUrl = `${s3Url}/${fileName}`;
+
+      photoUrl = `${process.env.AWS_S3_URL}/${fileName}`;
     }
-    const newUser = await prisma.user.create({
-      data: { username, email, password: hashedPassword, photoUrl },
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        username,
+        email,
+        password: hashedPassword,
+        photoUrl: photoUrl || file.toString(),
+      },
     });
-    const { password: _, ...userWithoutPassword } = newUser;
+
+    const { password: _, ...userWithoutPassword } = updatedUser;
     return NextResponse.json(
-      { message: "ลงทะเบียนสำเร็จ", user: userWithoutPassword },
-      { status: 201 }
+      { message: "ข้อมูลอัปเดตเรียบร้อย", user: userWithoutPassword },
+      { status: 200 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
+    console.error("Error updating user information:", error);
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการลงทะเบียน" },
+      { error: "เกิดข้อผิดพลาดในการอัปเดตข้อมูล" },
       { status: 500 }
     );
   }

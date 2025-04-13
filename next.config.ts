@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
       "images.unsplash.com",
       "thumbs.dreamstime.com",
       "fake-book.s3.ap-southeast-1.amazonaws.com",
+      "fake-book.s3.ap-southeast-1.amazonaws.comuploads",
     ],
   },
   env: {

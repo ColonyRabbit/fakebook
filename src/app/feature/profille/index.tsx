@@ -154,17 +154,16 @@ const IndexProfile = ({ id }: { id: string }) => {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold mb-6 text-center">โปรไฟล์ผู้ใช้</h1>
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* ส่วนข้อมูลโปรไฟล์ */}
         <div className="flex-1">
           <div className="bg-white shadow-lg rounded-lg p-6 dark:bg-gray-800">
             {user.photoUrl && (
               <div className="flex justify-center mb-4">
                 <Image
-                  src={user.photoUrl}
-                  alt={user.username}
+                  src={user?.photoUrl}
+                  alt={user?.username}
                   width={144}
                   height={144}
-                  className="rounded-full"
+                  className="rounded-full w-28 h-28 object-fit"
                 />
               </div>
             )}
@@ -211,7 +210,7 @@ const IndexProfile = ({ id }: { id: string }) => {
         <div className="flex-1">
           {/* เนื้อหาฝั่งนี้สามารถเพิ่มเติมได้ตามที่ต้องการ */}
           <div className="bg-white shadow-lg rounded-lg p-6 dark:bg-gray-800">
-            <p className="text-xl font-semibold">กิจกรรมของ {user.username}</p>
+            <p className="text-xl font-semibold">กิจกรรมของ {user?.username}</p>
             {/* เพิ่มเนื้อหาตามต้องการ */}
           </div>
         </div>
