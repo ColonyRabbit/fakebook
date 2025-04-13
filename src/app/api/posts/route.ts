@@ -1,56 +1,32 @@
 import { NextResponse } from "next/server";
 import prisma from "../../../../lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 // app/api/posts/route.ts
 export async function GET(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
+
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
 
-    // ดึง userId จาก session หรือ token (ตัวอย่าง)
-    // ในสถานการณ์จริง คุณต้องดึง userId จาก session หรือ token ที่ส่งมากับ request
-    const currentUserId = searchParams.get("userId") || null;
-
-    // ดึงรายการโพสต์พร้อมข้อมูลผู้ใช้และจำนวนไลค์
     const posts = await prisma.post.findMany({
       skip,
       take: limit,
-      select: {
-        id: true,
-        content: true,
-        createdAt: true,
-        updatedAt: true,
-        userId: true,
-        user: {
-          select: {
-            id: true,
-            username: true,
-            photoUrl: true,
-          },
-        },
-        // นับจำนวน likes ทั้งหมดของโพสต์
-        _count: {
-          select: {
-            likes: true,
-          },
-        },
-        // ตรวจสอบว่าผู้ใช้ปัจจุบันกดไลค์หรือไม่ (ถ้ามี userId)
-        likes: currentUserId
+      include: {
+        user: true,
+        _count: { select: { likes: true } },
+        likes: session.user?.id
           ? {
-              where: {
-                userId: currentUserId,
-              },
-              select: {
-                userId: true,
-              },
+              where: { userId: session.user?.id },
+              select: { userId: true },
             }
           : undefined,
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: { createdAt: "desc" },
     });
 
     // แปลงข้อมูลให้มีรูปแบบที่ต้องการ
@@ -63,10 +39,11 @@ export async function GET(request: Request) {
       userId: post.userId,
       user: post.user,
       likeCount: post._count.likes,
-      isLiked: currentUserId ? post.likes.length > 0 : false,
+      // สถานะ like ของผู้ใช้ปัจจุบัน
+      isLiked: session.user?.id ? post.likes.length > 0 : false,
+      comments: post.content, // ถ้าต้องการ
     }));
 
-    // นับจำนวนโพสต์ทั้งหมด
     const totalPosts = await prisma.post.count();
 
     return NextResponse.json({
@@ -86,31 +63,25 @@ export async function GET(request: Request) {
     );
   }
 }
+//post
 export async function POST(request: Request) {
   try {
+    const session = await getServerSession(authOptions);
     const { content, userId } = await request.json();
-
-    // ตรวจสอบว่ามี content และ userId หรือไม่
-    if (!content || !userId) {
-      return NextResponse.json(
-        { error: "โพสต์ล้มเหลว กรุณาลองใหม่อีกครั้ง" },
-        { status: 400 }
-      );
-    }
-
-    // สร้างโพสต์ใหม่ในฐานข้อมูล
-    const newPost = await prisma.post.create({
+    await prisma.post.create({
       data: {
         content,
         userId,
       },
     });
-
-    return NextResponse.json(newPost, { status: 201 });
-  } catch (error) {
-    console.error("Create post error:", error);
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการสร้างโพสต์" },
+      { message: "Post created successfully", content },
+      { status: 201 }
+    );
+  } catch (error: any) {
+    console.error("Error in POST request:", error);
+    return NextResponse.json(
+      { error: error.message || "An error occurred" },
       { status: 500 }
     );
   }
