@@ -1,235 +1,225 @@
 "use client";
+
 import Image from "next/image";
-import React, { useState, useEffect } from "react";
-import { getSession } from "next-auth/react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { MessageCircle, Share2, ThumbsUp } from "lucide-react";
+import {
+  Post as PrismaPost,
+  User as PrismaUser,
+  Like as PrismaLike,
+} from "@prisma/client";
+import { toast } from "react-hot-toast";
+import { Button } from "../../../../components/ui/button";
+import { Card } from "../../../../../@/components/ui/card";
+import { Skeleton } from "../../../../../@/components/ui/skeleton";
+import PostSkeleton from "./Skeleton";
+
+interface PostWithUser extends PrismaPost {
+  user: PrismaUser;
+  likes: PrismaLike[];
+  _count: {
+    likes: number;
+  };
+  isLiked: boolean;
+}
 
 const Feet = () => {
-  //local state
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<PostWithUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState(null);
-  const [likeInProgress, setLikeInProgress] = useState<string | null>(null); // เพิ่มสถานะกำลังกดไลค์
+  const [likeInProgress, setLikeInProgress] = useState<string | null>(null);
+  const { data: session } = useSession();
 
-  //useeffect
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const session = await getSession();
-        setCurrentUser(session);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      }
-    };
-
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/posts", { method: "GET" });
-        if (!response.ok) {
-          throw new Error("Failed to fetch posts");
-        }
-        const data = await response.json();
-        console.log("Posts data:", data);
-
-        // ตรวจสอบว่าข้อมูลเป็น array หรือไม่
-        if (Array.isArray(data)) {
-          setPosts(data);
-        } else if (data.posts && Array.isArray(data.posts)) {
-          setPosts(data.posts);
-        } else {
-          setPosts([]);
-          setError("Invalid data format received");
-        }
-      } catch (err) {
-        setError("Could not load posts");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-    fetchPosts();
-  }, []);
-
-  //function
-  const handleLike = async (postId: string) => {
+  const fetchPosts = useCallback(async () => {
     try {
-      if (!currentUser) {
-        alert("กรุณาเข้าสู่ระบบก่อนกดไลค์");
-        return;
-      }
-
-      // ป้องกันการกดซ้ำๆ ระหว่างรอการตอบกลับจาก API
-      if (likeInProgress === postId) return;
-      setLikeInProgress(postId);
-
-      const response = await fetch(`/api/posts/${postId}/like`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to like post");
-      }
-
-      const updatedPost = await response.json();
-      console.log("Updated post:", updatedPost);
-
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
-        )
-      );
-    } catch (error) {
-      console.error("Error liking post:", error);
+      setLoading(true);
+      const url = session?.user?.id
+        ? `/api/posts?userId=${session?.user?.id}`
+        : `/api/posts`;
+      const response = await fetch(url, { method: "GET" });
+      if (!response.ok) throw new Error("Failed to fetch posts");
+      const data = await response.json();
+      setPosts(Array.isArray(data) ? data : data.posts || []);
+    } catch (err) {
+      console.error(err);
+      setError("Could not load posts");
     } finally {
-      setLikeInProgress(null); // รีเซ็ตสถานะเมื่อเสร็จสิ้น
+      setLoading(false);
     }
-  };
+  }, [session?.user?.id]);
+
+  useEffect(() => {
+    if (session) fetchPosts();
+  }, [session, fetchPosts]);
+
+  const handleLike = useCallback(
+    async (postId?: string) => {
+      if (!postId) return;
+      try {
+        if (!session?.user?.id) {
+          toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
+          return;
+        }
+        if (likeInProgress === postId) return;
+        setLikeInProgress(postId);
+
+        const response = await fetch(`/api/posts/${postId}/like`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: session?.user?.id }),
+        });
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Failed to update like status");
+        }
+
+        const updatedPost = await response.json();
+        setPosts((prevPosts) =>
+          prevPosts.map((post) =>
+            post.id === updatedPost.id ? updatedPost : post
+          )
+        );
+      } catch (error: any) {
+        console.error("Error liking post:", error);
+        toast.error(error.message);
+      } finally {
+        setLikeInProgress(null);
+      }
+    },
+    [session, likeInProgress]
+  );
 
   return (
     <div className="max-w-2xl mx-auto p-4 sm:p-6 w-full">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-        Recent Posts
+      <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 mb-6">
+        ฟีดข่าว
       </h2>
 
       {loading && (
-        <div className="text-center py-8">
-          <p className="text-gray-500">Loading posts...</p>
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <PostSkeleton key={i} />
+          ))}
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-lg text-center my-4">
-          <p>{error}</p>
-        </div>
+        <Card className="p-4 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+          <p className="text-red-600 dark:text-red-400 text-center">{error}</p>
+        </Card>
       )}
 
       <div className="space-y-4">
         {!loading && posts?.length === 0 && (
-          <div className="text-center py-10 text-gray-500">
-            <p>No posts yet</p>
-          </div>
+          <Card className="p-8">
+            <p className="text-center text-gray-500 dark:text-gray-400">
+              ยังไม่มีโพสต์ในขณะนี้
+            </p>
+          </Card>
         )}
 
         {posts?.map((post) => (
-          <div key={post.id} className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <div className="flex justify-between items-center mb-3">
-              <Link href={`/profile/${post.user?.id}`}>
-                <h3 className="font-medium text-gray-800 flex items-center gap-2">
-                  {post.photoUrl ? (
-                    <Image
-                      className="rounded-full w-10 h-10"
-                      width={40}
-                      height={40}
-                      alt={
-                        post.username ||
-                        "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
-                      }
-                      src={
-                        post.photoUrl ||
-                        "https://thumbs.dreamstime.com/b/nature-photo-freephoto-267878350.jpg"
-                      }
-                    />
-                  ) : (
-                    <div className="rounded-full bg-gray-200 w-10 h-10 flex items-center justify-center">
-                      <span className="text-gray-500">No Image</span>
+          <Card
+            key={post?.id}
+            className="overflow-hidden transition-all duration-300 hover:shadow-lg"
+          >
+            <div className="p-4 sm:p-6">
+              <div className="flex justify-between items-center mb-4">
+                <Link href={`/profile/${post?.user?.id}`}>
+                  <div className="flex items-center gap-3 group">
+                    {post?.user?.photoUrl ? (
+                      <Image
+                        className="rounded-full ring-2 ring-offset-2 ring-gray-100 dark:ring-gray-800"
+                        width={48}
+                        height={48}
+                        alt={post?.user?.username || "User"}
+                        src={post?.user?.photoUrl}
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold">
+                        {(post?.user?.username || "A")[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div>
+                      <p className="font-semibold text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                        {post?.user?.username || "Anonymous"}
+                      </p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(post?.createdAt ?? "").toLocaleDateString(
+                          "th-TH",
+                          {
+                            day: "numeric",
+                            month: "long",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          }
+                        )}
+                      </p>
                     </div>
-                  )}
-                  <p>{post.user?.username || "Anonymous"}</p>
-                </h3>
-              </Link>
-              <span className="text-sm text-gray-500">
-                {new Date(post.createdAt).toLocaleDateString()}
-              </span>
-            </div>
-            <p className="text-gray-700 leading-relaxed">{post.content}</p>
+                  </div>
+                </Link>
+              </div>
 
-            <div className="mt-4 pt-3 border-t border-gray-100 flex space-x-4">
-              <button
-                onClick={() => handleLike(post.id)}
-                className={`flex items-center text-sm ${
-                  post.isLiked
-                    ? "text-blue-600"
-                    : "text-gray-500 hover:text-blue-600"
-                }`}
-                disabled={!currentUser || likeInProgress === post.id}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  fill={post.isLiked ? "currentColor" : "none"}
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"
-                  />
-                </svg>
-                {likeInProgress === post.id ? (
-                  "Processing..."
-                ) : (
-                  <>
-                    {post.isLiked ? "Unlike" : "Like"}{" "}
-                    {post.likes?.length ||
-                      post.likeCount ||
-                      post._count?.likes ||
-                      0}
-                  </>
-                )}
-              </button>
-
-              <button className="flex items-center text-gray-500 hover:text-blue-600 text-sm">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                Comment
-              </button>
-              <button className="flex items-center text-gray-500 hover:text-blue-600 text-sm">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 mr-1"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"
-                  />
-                </svg>
-                Share
-              </button>
-            </div>
-            {!currentUser && (
-              <p className="mt-2 text-sm text-gray-500">
-                กรุณาเข้าสู่ระบบเพื่อโต้ตอบกับโพสต์
+              <p className="text-gray-800 dark:text-gray-200 mb-4 whitespace-pre-wrap">
+                {post?.content}
               </p>
-            )}
-          </div>
+
+              <div className="flex items-center justify-between py-2 border-t border-gray-100 dark:border-gray-800">
+                <div className="flex items-center space-x-2">
+                  <div className="bg-blue-500 rounded-full p-1">
+                    <ThumbsUp className="w-3 h-3 text-white" />
+                  </div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
+                    {post?._count?.likes}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <Button
+                  variant="ghost"
+                  className={`flex-1 ${
+                    post?.isLiked
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-gray-600 dark:text-gray-400"
+                  }`}
+                  onClick={() => handleLike(post?.id)}
+                  disabled={!session || likeInProgress === post?.id}
+                >
+                  <ThumbsUp className="w-5 h-5 mr-2" />
+                  {post?.isLiked ? "ถูกใจแล้ว" : "ถูกใจ"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 text-gray-600 dark:text-gray-400"
+                >
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  แสดงความคิดเห็น
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1 text-gray-600 dark:text-gray-400"
+                >
+                  <Share2 className="w-5 h-5 mr-2" />
+                  แชร์
+                </Button>
+              </div>
+            </div>
+          </Card>
         ))}
       </div>
+
+      {!session && (
+        <Card className="p-4 mt-6 text-center bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+          <p className="text-blue-600 dark:text-blue-400">
+            กรุณาเข้าสู่ระบบเพื่อโต้ตอบกับโพสต์
+          </p>
+        </Card>
+      )}
     </div>
   );
 };
