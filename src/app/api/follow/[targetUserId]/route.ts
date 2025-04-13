@@ -15,7 +15,7 @@ export async function POST(
     }
 
     // ดึง targetUserId จาก dynamic route parameter
-    const { targetUserId } = params;
+    const { targetUserId } = await Promise.resolve(params);
     if (!targetUserId) {
       return NextResponse.json(
         { error: "targetUserId is required" },
@@ -92,7 +92,7 @@ export async function GET(
   { params }: { params: { targetUserId: string } }
 ) {
   try {
-    const targetUserId = params.targetUserId;
+    const { targetUserId } = await Promise.resolve(params);
     if (!targetUserId) {
       return NextResponse.json(
         { error: "targetUserId is required" },

@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import { User } from "@prisma/client";
+import { Camera, Loader2 } from "lucide-react";
 
 const ProfileSettings = () => {
   const { data: session, status } = useSession();
@@ -18,7 +19,7 @@ const ProfileSettings = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const { id } = useParams();
-  // ดึงข้อมูลผู้ใช้จาก session
+
   useEffect(() => {
     if (session?.user) {
       setUsername(session.user.name || "");
@@ -27,7 +28,6 @@ const ProfileSettings = () => {
     }
   }, [session]);
 
-  // function
   const fetchUser = async () => {
     try {
       setLoading(true);
@@ -40,17 +40,16 @@ const ProfileSettings = () => {
       setLoading(false);
     }
   };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files?.[0]) {
       setImagePreview(e.target.files[0]);
     }
   };
 
-  // ฟังก์ชันบันทึกการเปลี่ยนแปลง
   const handleSaveChanges = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // ตรวจสอบข้อมูลที่กรอก
     if (!username) {
       toast.error("กรุณากรอกชื่อผู้ใช้");
       return;
@@ -68,15 +67,14 @@ const ProfileSettings = () => {
       formData.append("username", username);
       formData.append("email", session?.user.email || "");
 
-      // ตรวจสอบว่า imagePreview มีการตั้งค่าไว้หรือไม่
       if (imagePreview) {
-        formData.append("profileImage", imagePreview); // ส่งไฟล์ที่อัปโหลดใหม่
+        formData.append("profileImage", imagePreview);
       } else if (user?.photoUrl) {
-        formData.append("profileImage", session?.user.photoUrl); // ใช้ photoUrl เดิมจาก user
+        formData.append("profileImage", session?.user.photoUrl);
       }
 
       if (password) {
-        formData.append("password", password); // เฉพาะเมื่อมีการกรอกรหัสผ่าน
+        formData.append("password", password);
       }
 
       const res = await fetch("/api/register", {
@@ -86,7 +84,6 @@ const ProfileSettings = () => {
       });
 
       const data = await res.json();
-      console.log("data", data);
       if (!res.ok) {
         throw new Error(data?.message || "เกิดข้อผิดพลาดในการอัปเดตข้อมูล");
       }
@@ -100,138 +97,140 @@ const ProfileSettings = () => {
     }
   };
 
-  if (status === "loading") return <p>กำลังโหลดข้อมูล...</p>;
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 max-w-xl mx-auto bg-white shadow rounded-md my-4">
-      <h1 className="text-2xl font-semibold mb-6">การตั้งค่าบัญชีผู้ใช้</h1>
-      <form onSubmit={handleSaveChanges} encType="multipart/form-data">
-        {/* Profile Picture */}
-        <div className="flex justify-center mb-4">
-          <Image
-            key={user?.photoUrl}
-            src={
-              imagePreview instanceof File
-                ? URL.createObjectURL(imagePreview)
-                : user?.photoUrl || "/image/freephoto.jpg" // Ensure the fallback URL is properly formatted
-            }
-            alt="Profile Picture"
-            width={100}
-            height={100}
-            className="rounded-full w-28 h-28 object-cover"
-          />
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 dark:bg-gray-900">
+      <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-8">
+          <h1 className="text-3xl font-bold text-white text-center">
+            ตั้งค่าโปรไฟล์
+          </h1>
         </div>
 
-        <div className="mb-4">
-          <label
-            htmlFor="photo"
-            className="block text-sm font-medium text-gray-700"
-          >
-            อัปโหลดภาพโปรไฟล์ใหม่
-          </label>
-          <input
-            type="file"
-            id="photo"
-            name="photo"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="mt-1 block w-full text-sm text-gray-500"
-          />
-        </div>
+        <form onSubmit={handleSaveChanges} className="px-8 py-6 space-y-6">
+          {/* Profile Picture Section */}
+          <div className="flex flex-col items-center space-y-4">
+            <div className="relative">
+              <Image
+                key={user?.photoUrl}
+                src={
+                  imagePreview instanceof File
+                    ? URL.createObjectURL(imagePreview)
+                    : user?.photoUrl || "/image/freephoto.jpg"
+                }
+                alt="Profile Picture"
+                width={120}
+                height={120}
+                className="rounded-full object-cover ring-4 ring-blue-100"
+              />
+              <label
+                htmlFor="photo"
+                className="absolute bottom-0 right-0 bg-blue-500 p-2 rounded-full cursor-pointer hover:bg-blue-600 transition-colors"
+              >
+                <Camera className="h-5 w-5 text-white" />
+                <input
+                  type="file"
+                  id="photo"
+                  name="photo"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
+            <p className="text-sm text-gray-500">
+              คลิกที่ไอคอนกล้องเพื่ออัพโหลดรูปภาพ
+            </p>
+          </div>
 
-        {/* Username */}
-        <div className="mb-4">
-          <label
-            htmlFor="username"
-            className="block text-sm font-medium text-gray-700"
-          >
-            ชื่อผู้ใช้
-          </label>
-          <input
-            type="text"
-            id="username"
-            name="username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+          {/* Form Fields */}
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                ชื่อผู้ใช้
+              </label>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                placeholder="กรอกชื่อผู้ใช้"
+              />
+            </div>
 
-        {/* Email */}
-        <div className="mb-4">
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-gray-700"
-          >
-            อีเมล
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            disabled
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 text-gray-500"
-          />
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                อีเมล
+              </label>
+              <input
+                type="email"
+                value={email}
+                disabled
+                className="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+              />
+            </div>
 
-        {/* Password */}
-        <div className="mb-4">
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700"
-          >
-            รหัสผ่านใหม่
-          </label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                รหัสผ่านใหม่
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                placeholder="เว้นว่างหากไม่ต้องการเปลี่ยน"
+              />
+            </div>
 
-        {/* Confirm Password */}
-        <div className="mb-4">
-          <label
-            htmlFor="confirmPassword"
-            className="block text-sm font-medium text-gray-700"
-          >
-            ยืนยันรหัสผ่าน
-          </label>
-          <input
-            type="password"
-            id="confirmPassword"
-            name="confirmPassword"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="ยืนยันรหัสผ่านใหม่"
-            className="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                ยืนยันรหัสผ่าน
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-1 block w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                placeholder="ยืนยันรหัสผ่านใหม่"
+              />
+            </div>
+          </div>
 
-        {/* Save Button */}
-        <div className="justify-center grid grid-cols-2 gap-2">
-          <Button
-            type="submit"
-            className="bg-blue-600 text-white py-2 px-6 rounded-md shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            disabled={loading}
-          >
-            {loading ? "กำลังบันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-          </Button>
-          <Button
-            onClick={() => router.back()}
-            type="button"
-            className="bg-red-600 text-white py-2 px-6 rounded-md shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500"
-            disabled={loading}
-          >
-            ยกเลิก
-          </Button>
-        </div>
-      </form>
+          {/* Action Buttons */}
+          <div className="flex gap-4 pt-4">
+            <Button
+              type="submit"
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                  กำลังบันทึก...
+                </div>
+              ) : (
+                "บันทึกการเปลี่ยนแปลง"
+              )}
+            </Button>
+            <Button
+              type="button"
+              onClick={() => router.back()}
+              className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 py-3 rounded-lg font-medium transition-colors"
+              disabled={loading}
+            >
+              ยกเลิก
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

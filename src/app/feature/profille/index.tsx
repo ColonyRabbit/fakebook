@@ -1,10 +1,28 @@
 "use client";
+
 import React, { useEffect, useState } from "react";
-import { Button } from "../../../components/ui/button";
+
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import {
+  UserCircle2,
+  Users,
+  Activity,
+  Settings,
+  Mail,
+  Link as LinkIcon,
+} from "lucide-react";
+import { Card } from "../../../../@/components/ui/card";
+import ProfileSkeleton from "./components/ProfileSkeleton";
+import { Button } from "../../../components/ui/button";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../../../../@/components/ui/tabs";
 
 interface User {
   id: string;
@@ -18,13 +36,12 @@ interface User {
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState("posts");
 
-  // ดึงข้อมูลผู้ใช้ target ตาม id
   const fetchUser = async () => {
     try {
       setLoading(true);
@@ -43,13 +60,8 @@ const IndexProfile = ({ id }: { id: string }) => {
     }
   };
 
-  // ดึงสถานะการติดตาม (ตรวจสอบว่าผู้ใช้ที่ล็อกอินติดตาม target user หรือไม่)
   const fetchFollower = async () => {
-    if (!user?.id || !session) {
-      console.log("fetchFollower: user or session is not ready");
-      return;
-    }
-    console.log("fetchFollower: calling API for target user id:", user.id);
+    if (!user?.id || !session) return;
     try {
       const res = await fetch(`/api/follow/${user.id}?checkStatus=true`, {
         method: "GET",
@@ -57,11 +69,9 @@ const IndexProfile = ({ id }: { id: string }) => {
       });
       if (res.ok) {
         const result = await res.json();
-        console.log("result", result);
         setIsFollowing(result.alreadyFollowing);
       } else {
         const data = await res.json();
-        console.error("Error checking follow status", data);
         if (data.error === "Not following") {
           setIsFollowing(false);
         }
@@ -72,18 +82,13 @@ const IndexProfile = ({ id }: { id: string }) => {
   };
 
   useEffect(() => {
-    if (session && id) {
-      fetchUser();
-    }
+    if (session && id) fetchUser();
   }, [session, id]);
 
   useEffect(() => {
-    if (user?.id && session) {
-      fetchFollower();
-    }
+    if (user?.id && session) fetchFollower();
   }, [user?.id, session]);
 
-  // ฟังก์ชันติดตาม
   const handleFollow = async (targetUserId: string) => {
     try {
       const res = await fetch(`/api/follow/${targetUserId}`, {
@@ -110,7 +115,6 @@ const IndexProfile = ({ id }: { id: string }) => {
     }
   };
 
-  // ฟังก์ชันยกเลิกติดตาม
   const handleUnfollow = async (targetId: string) => {
     try {
       const res = await fetch(`/api/unfollow/${targetId}`, {
@@ -132,89 +136,174 @@ const IndexProfile = ({ id }: { id: string }) => {
     }
   };
 
-  if (loading) return <div className="p-4 text-center">กำลังโหลด...</div>;
-  if (error)
-    return (
-      <div className="p-4 text-center text-red-500">
-        เกิดข้อผิดพลาด: {error}
-      </div>
-    );
-  if (!user) return <div className="p-4 text-center">ไม่พบข้อมูลผู้ใช้</div>;
-
-  // หากไม่มี session ให้แสดงปุ่มเข้าสู่ระบบแทนปุ่มติดตาม
   if (!session) {
     return (
-      <div className="p-4 text-center">
-        <Button onClick={() => router.push("/login")}>เข้าสู่ระบบ</Button>
-      </div>
+      <Card className="max-w-md mx-auto mt-20 p-6 text-center">
+        <UserCircle2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+        <h2 className="text-xl font-semibold mb-4">
+          เข้าสู่ระบบเพื่อดูโปรไฟล์
+        </h2>
+        <Button onClick={() => router.push("/login")} className="w-full">
+          เข้าสู่ระบบ
+        </Button>
+      </Card>
+    );
+  }
+
+  if (loading) {
+    return (
+      <Card className="max-w-4xl mx-auto mt-8 p-8">
+        <ProfileSkeleton />
+      </Card>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card className="max-w-md mx-auto mt-8 p-6 border-red-200 bg-red-50">
+        <div className="text-center text-red-600">
+          <p className="text-lg font-semibold mb-2">เกิดข้อผิดพลาด</p>
+          <p>{error}</p>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!user) {
+    return (
+      <Card className="max-w-md mx-auto mt-8 p-6">
+        <div className="text-center text-gray-600">
+          <UserCircle2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg">ไม่พบข้อมูลผู้ใช้</p>
+        </div>
+      </Card>
     );
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">โปรไฟล์ผู้ใช้</h1>
-      <div className="flex flex-col lg:flex-row gap-8">
-        <div className="flex-1">
-          <div className="bg-white shadow-lg rounded-lg p-6 dark:bg-gray-800">
-            {user.photoUrl && (
-              <div className="flex justify-center mb-4">
-                <Image
-                  src={user?.photoUrl}
-                  alt={user?.username}
-                  width={144}
-                  height={144}
-                  className="rounded-full w-28 h-28 object-fit"
-                />
+    <div className="container max-w-4xl mx-auto p-4 space-y-6">
+      <Card className="p-6">
+        <div className="flex flex-col md:flex-row items-center gap-6">
+          <div className="flex-shrink-0">
+            {user.photoUrl ? (
+              <Image
+                src={user.photoUrl}
+                alt={user.username}
+                width={128}
+                height={128}
+                className="rounded-full ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-800"
+              />
+            ) : (
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <span className="text-4xl font-bold text-white">
+                  {user.username[0].toUpperCase()}
+                </span>
               </div>
             )}
-            <div className="text-center">
-              <p className="text-2xl font-semibold">{user.username}</p>
-              {user.email && (
-                <p className="text-gray-600 dark:text-gray-300">{user.email}</p>
-              )}
-            </div>
-            <div className="mt-4 flex justify-around">
-              <div>
-                <p className="font-bold">{user.followers.length}</p>
-                <p className="text-sm text-gray-500">ผู้ติดตาม</p>
+          </div>
+
+          <div className="flex-grow text-center md:text-left">
+            <h1 className="text-2xl font-bold mb-2">{user.username}</h1>
+            <div className="flex flex-col md:flex-row gap-4 items-center md:items-start">
+              <div className="flex items-center text-muted-foreground">
+                <Mail className="w-4 h-4 mr-2" />
+                {user.email}
               </div>
-              <div>
-                <p className="font-bold">{user.following.length}</p>
-                <p className="text-sm text-gray-500">ติดตาม</p>
+              <div className="flex items-center text-muted-foreground">
+                <LinkIcon className="w-4 h-4 mr-2" />
+                <span>
+                  ร่วมเป็นสมาชิกเมื่อ {new Date().toLocaleDateString()}
+                </span>
               </div>
             </div>
-            <div className="mt-6 text-center">
+
+            <div className="flex justify-center md:justify-start gap-6 mt-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold">{user.followers.length}</p>
+                <p className="text-sm text-muted-foreground">ผู้ติดตาม</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold">{user.following.length}</p>
+                <p className="text-sm text-muted-foreground">กำลังติดตาม</p>
+              </div>
+            </div>
+
+            <div className="mt-6">
               {session.user.id === user.id ? (
-                <div className="text-green-600 font-semibold">
-                  จัดการข้อมูลของคุณ
-                </div>
-              ) : isFollowing ? (
                 <Button
-                  onClick={() => handleUnfollow(user.id)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => router.push(`/profile/${user?.id}/setting`)}
+                  variant="outline"
+                  className="w-full md:w-auto"
                 >
-                  ยกเลิกติดตาม
+                  <Settings className="w-4 h-4 mr-2" />
+                  แก้ไขโปรไฟล์
                 </Button>
               ) : (
                 <Button
-                  onClick={() => handleFollow(user.id)}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() =>
+                    isFollowing
+                      ? handleUnfollow(user.id)
+                      : handleFollow(user.id)
+                  }
+                  variant={isFollowing ? "outline" : "default"}
+                  className="w-full md:w-auto"
                 >
-                  ติดตาม
+                  <Users className="w-4 h-4 mr-2" />
+                  {isFollowing ? "ยกเลิกการติดตาม" : "ติดตาม"}
                 </Button>
               )}
             </div>
           </div>
         </div>
-        {/* ส่วนอื่น ๆ ของโปรไฟล์ (เช่น posts, activity ฯลฯ) */}
-        <div className="flex-1">
-          {/* เนื้อหาฝั่งนี้สามารถเพิ่มเติมได้ตามที่ต้องการ */}
-          <div className="bg-white shadow-lg rounded-lg p-6 dark:bg-gray-800">
-            <p className="text-xl font-semibold">กิจกรรมของ {user?.username}</p>
-            {/* เพิ่มเนื้อหาตามต้องการ */}
-          </div>
-        </div>
-      </div>
+      </Card>
+
+      <Tabs
+        defaultValue="posts"
+        className="w-full"
+        onValueChange={setActiveTab}
+      >
+        <TabsList className="w-full justify-start">
+          <TabsTrigger value="posts" className="flex items-center">
+            <Activity className="w-4 h-4 mr-2" />
+            โพสต์
+          </TabsTrigger>
+          <TabsTrigger value="about" className="flex items-center">
+            <UserCircle2 className="w-4 h-4 mr-2" />
+            เกี่ยวกับ
+          </TabsTrigger>
+          <TabsTrigger value="followers" className="flex items-center">
+            <Users className="w-4 h-4 mr-2" />
+            ผู้ติดตาม
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="posts" className="mt-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">โพสต์ล่าสุด</h3>
+            <p className="text-muted-foreground text-center py-8">
+              ยังไม่มีโพสต์ในขณะนี้
+            </p>
+          </Card>
+        </TabsContent>
+        <TabsContent value="about" className="mt-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">ข้อมูลผู้ใช้</h3>
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-muted-foreground">อีเมล</p>
+                <p>{user.email}</p>
+              </div>
+            </div>
+          </Card>
+        </TabsContent>
+        <TabsContent value="followers" className="mt-6">
+          <Card className="p-6">
+            <h3 className="text-xl font-semibold mb-4">ผู้ติดตาม</h3>
+            <p className="text-muted-foreground text-center py-8">
+              ยังไม่มีผู้ติดตามในขณะนี้
+            </p>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
