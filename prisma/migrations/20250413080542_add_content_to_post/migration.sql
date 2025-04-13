@@ -15,7 +15,7 @@ DROP SEQUENCE "User_id_seq";
 -- CreateTable
 CREATE TABLE "Post" (
     "id" TEXT NOT NULL,
-    "postText" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE "Follower" (
 -- CreateTable
 CREATE TABLE "Comment" (
     "id" TEXT NOT NULL,
-    "commentText" TEXT NOT NULL,
+    "content" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,

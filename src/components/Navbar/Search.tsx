@@ -112,7 +112,7 @@ const Search = () => {
             {searchResults.map((user) => (
               <Link
                 onClick={handleClearSearchText}
-                href={`/profile/${user!.username}`}
+                href={`/profile/${user!.id}`}
                 key={user.id}
               >
                 <div className="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors duration-150 cursor-pointer border-b border-gray-100 last:border-b-0">
