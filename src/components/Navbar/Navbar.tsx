@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Logo from "./Logo";
 import Search from "./Search";
 import ThemeToggle from "../ThemeToggle";
@@ -9,81 +9,120 @@ import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CiSettings } from "react-icons/ci";
+import { User } from "@prisma/client";
 
 const Navbar = () => {
-  //useRuter
+  //state
+  const [user, setUser] = useState<User | null>(null);
   const route = useRouter();
-  //usePathName
   const pathName = usePathname();
-  console.log(pathName);
   const { data: session } = useSession();
+
+  //useEffect to fetch user data
+  useEffect(() => {
+    if (session?.user?.id) {
+      const fetchUser = async () => {
+        try {
+          const response = await fetch(`/api/users/${session.user.id}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          });
+          const data = await response.json();
+          if (data) {
+            setUser(data);
+          }
+        } catch (error) {
+          console.error("Error fetching user:", error);
+        }
+      };
+      fetchUser();
+    }
+  }, [session?.user?.id]); // Fetch new user data when session changes
+
   return (
-    <div className="w-full px-6 py-4 shadow-sm bg-white dark:bg-[#375b93] sticky top-0 z-50 drop-shadow-2xl">
+    <div className="w-full px-4 sm:px-6 py-4 bg-[#375b93] sticky top-0 z-50 shadow-lg drop-shadow-2xl">
       <div className="max-w-7xl mx-auto grid grid-cols-3 items-center">
+        {/* Logo Section */}
         <div className="flex items-center">
           <Logo />
         </div>
-
+        {/* Search Section */}
         <div className="flex justify-center">
           <Search />
         </div>
 
+        {/* User Profile / Logout Section */}
         <div className="flex items-center justify-end gap-3">
-          <ThemeToggle />
-          {session ? (
-            <div className="ml-auto flex gap-4 items-center">
-              <Button
-                variant="default"
-                onClick={() => signOut()}
-                className="text-sm font-medium"
-              >
-                Logout
-              </Button>
-              {session.user.photoUrl && (
-                <Link
-                  href={`/profile/${session.user.id}`}
-                  className="relative inline-block"
+          <div className="ml-auto flex gap-4 items-center">
+            <ThemeToggle />
+
+            {session ? (
+              <>
+                {/* Logout Button */}
+                <Button
+                  variant="default"
+                  onClick={() => signOut()}
+                  className="text-sm font-medium text-black hover:bg-[#4e81d7]"
                 >
-                  <Image
-                    src={session.user.photoUrl}
-                    alt="Profile Picture"
-                    width={40}
-                    height={40}
-                    className="rounded-full w-10 h-10 "
-                  />
-                </Link>
-              )}
-              {pathName === `/profile/${session.user.id}` &&
-                session.user.id && (
-                  <div className="flex-1 mt-6 lg:mt-0">
-                    <Button
-                      onClick={() =>
-                        route.push(`/profile/${session.user.id}/setting`)
-                      }
-                    >
-                      <CiSettings />
-                    </Button>
-                  </div>
+                  Logout
+                </Button>
+
+                {/* Profile Picture with Link */}
+                {session && user && (
+                  <Link
+                    href={`/profile/${user.id}`}
+                    className="relative inline-block"
+                  >
+                    <Image
+                      src={user?.photoUrl || "/default-avatar.jpg"} // Use user data here
+                      alt="Profile Picture"
+                      width={40}
+                      height={40}
+                      className="rounded-full w-10 h-10 object-cover border-2 border-white"
+                    />
+                  </Link>
                 )}
-            </div>
-          ) : (
-            <>
-              <Button
-                variant="default"
-                onClick={() => signIn()}
-                className="text-sm font-medium "
-              >
-                <span className="">Login</span>
-              </Button>
-              {!session && (
+
+                {/* Settings Button for Profile Page */}
+                {pathName === `/profile/${session.user.id}` &&
+                  session.user.id && (
+                    <div className="mt-2 lg:mt-0">
+                      <Button
+                        onClick={() =>
+                          route.push(`/profile/${session.user.id}/setting`)
+                        }
+                        className="text-sm font-medium bg-transparent border-2 border-white hover:bg-white hover:text-[#375b93]"
+                      >
+                        <CiSettings size={24} />
+                      </Button>
+                    </div>
+                  )}
+              </>
+            ) : (
+              <>
+                {/* Login Button */}
+                <Button
+                  variant="default"
+                  onClick={() => signIn()}
+                  className="text-sm font-medium text-black hover:bg-[#4e81d7]"
+                >
+                  Login
+                </Button>
+
+                {/* Register Button */}
                 <Link href="/register">
-                  <Button variant="default" className="text-sm font-medium ">
-                    <span className="">Register</span>
+                  <Button
+                    variant="default"
+                    className="text-sm font-medium text-black hover:bg-[#4e81d7]"
+                  >
+                    Register
                   </Button>
                 </Link>
-              )}
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
