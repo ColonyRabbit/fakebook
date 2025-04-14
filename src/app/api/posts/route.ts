@@ -86,6 +86,7 @@ export async function POST(request: Request) {
     );
   }
 }
+//patch
 export async function PATCH(request: Request) {
   try {
     // ตรวจสอบ session ก่อน

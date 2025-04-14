@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = params;
+    const { id } = await Promise.resolve(params);
     if (!id) {
       return new Response("id is required", { status: 400 });
     }
@@ -15,9 +15,6 @@ export async function GET(
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        // ดึงข้อมูลของผู้ติดตาม (follower) โดย include user ใน relation "UserFollowing"
-        // (โดยที่ใน model Follower ความสัมพันธ์ระหว่าง follower กับ target จะถูกกำหนดโดย
-        //  follower: User @relation("UserFollowing", ...))
         followers: {
           include: {
             // ดึงข้อมูลของผู้ที่ทำการติดตาม

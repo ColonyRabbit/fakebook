@@ -98,7 +98,7 @@ export default function PostCreator() {
           )}
 
           <div
-            className="flex-1 bg-secondary rounded-full px-4 py-2.5 text-muted-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
+            className="flex-1 bg-secondary p-4 rounded-2xl text-muted-foreground cursor-pointer hover:bg-secondary/80 transition-colors"
             onClick={() => setIsExpanded(true)}
           >
             {isExpanded ? (
