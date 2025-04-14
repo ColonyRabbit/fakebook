@@ -7,75 +7,49 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Post {
-  id        String    @id @default(cuid())
-  content   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes     Like[]
-  comments  Comment[]
-
-  @@index([userId])
-}
-
 model User {
-  id        String     @id @default(cuid())
-  username  String     @unique
-  email     String     @unique
+  id        String   @id @default(uuid())
+  username  String
+  email     String   @unique
   password  String
   photoUrl  String?
-  posts     Post[]
-  likes     Like[]
-  // คนที่ติดตามผู้ใช้นี้ (target user ที่ถูก follow)
-  followers Follower[] @relation("UserFollowers")
-  // คนที่ผู้ใช้นี้ติดตาม (current user's following list)
-  following Follower[] @relation("UserFollowing")
-  comments  Comment[]
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
 }
 
-model Follower {
-  /// ID ของผู้ใช้ที่ติดตาม (ผู้ติดตาม)
-  followerId  String
-  /// ID ของผู้ใช้ที่ถูกติดตาม (target)
-  followingId String
-
-  /// ความสัมพันธ์ที่แสดงว่าผู้ใช้ที่เป็น "follower" หมายถึงผู้ที่ติดตามคนอื่น
-  follower  User @relation("UserFollowing", fields: [followerId], references: [id], onDelete: Cascade)
-  /// ความสัมพันธ์ที่แสดงว่าผู้ใช้ที่เป็น "following" หมายถึงผู้ที่ถูกติดตาม 
-  following User @relation("UserFollowers", fields: [followingId], references: [id], onDelete: Cascade)
-
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@id([followerId, followingId])
-  @@index([followerId])
-  @@index([followingId])
+  user     User      @relation(fields: [userId], references: [id])
+  comments Comment[]
+  likes    Like[]
 }
 
 model Comment {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   content   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  userId    String
   postId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId    String
+  createdAt DateTime @default(now())
 
-  @@index([userId])
-  @@index([postId])
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
 }
 
 model Like {
   userId String
   postId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id])
+  post Post @relation(fields: [postId], references: [id])
 
   @@id([userId, postId])
-  @@index([userId])
-  @@index([postId])
 }
