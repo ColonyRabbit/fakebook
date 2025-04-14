@@ -1,6 +1,8 @@
+// src/app/api/auth/[...nextauth]/route.ts
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
+// ประกาศ module augmentation เพื่อเพิ่ม field ให้กับ User และ Session
 declare module "next-auth" {
   interface User {
     accessToken?: string;
@@ -44,6 +46,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
+    // Callback สำหรับ JWT token
     async jwt({ token, user, account }) {
       if (user && account) {
         token.id = user.id;
@@ -54,6 +57,7 @@ export const authOptions = {
       }
       return token;
     },
+    // Callback สำหรับ session object
     async session({ session, token }) {
       session.user.id = token.id as string;
       session.user.name = token.name as string;
