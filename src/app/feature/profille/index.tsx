@@ -74,12 +74,10 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (session && id) fetchUser();
-    console.log("user>>>>", user);
   }, [session, id]);
 
   useEffect(() => {
     if (user?.id && session) fetchFollower();
-    console.log("user>>>>", user);
   }, [user?.id, session]);
 
   const handleFollow = async (targetUserId: string) => {
@@ -205,7 +203,12 @@ const IndexProfile = ({ id }: { id: string }) => {
               <div className="flex items-center text-muted-foreground">
                 <LinkIcon className="w-4 h-4 mr-2" />
                 <span>
-                  ร่วมเป็นสมาชิกเมื่อ {new Date().toLocaleDateString()}
+                  ร่วมเป็นสมาชิกเมื่อ{" "}
+                  {new Date(user?.createdAt).toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </span>
               </div>
             </div>
