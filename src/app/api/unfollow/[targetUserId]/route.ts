@@ -1,14 +1,11 @@
 import { getServerSession } from "next-auth/next";
 import { NextResponse } from "next/server";
-import { authOptions } from "../../auth/[...nextauth]/route";
 import prisma from "../../../../../lib/prisma";
+import { authOptions } from "../../../../../lib/authOptions";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { targetUserId: string } }
-) {
+export async function POST(request: Request, context: any) {
   try {
-    const targetUserId = params.targetUserId;
+    const { targetUserId } = context.params;
     if (!targetUserId) {
       return NextResponse.json(
         { error: "targetUserId is required" },

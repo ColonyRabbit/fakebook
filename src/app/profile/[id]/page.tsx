@@ -1,8 +1,7 @@
 import IndexProfile from "../../feature/profille";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const { id } = await Promise.resolve(params);
-
+export async function generateMetadata({ params }: { params: any }) {
+  const { id } = params;
   return {
     title: `${id}`,
     description:
@@ -10,8 +9,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default async function Page({ params }: { params: { id: string } }) {
-  const { id } = await Promise.resolve(params);
-
+export default function Page({ params }: { params: any }) {
+  const { id } = params;
   return <IndexProfile id={id} />;
 }
