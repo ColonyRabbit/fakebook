@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
-import { authOptions } from "../../../api/auth/[...nextauth]/route";
+import { authOptions } from "../../../../../lib/authOptions";
 import prisma from "../../../../../lib/prisma";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { targetUserId: string } }
-) {
+export async function POST(request: Request, context: any) {
   try {
     // ดึง session จาก NextAuth
     const session = await getServerSession(authOptions);
@@ -14,8 +11,9 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // ดึง targetUserId จาก dynamic route parameter
-    const { targetUserId } = await Promise.resolve(params);
+    // รับ targetUserId จาก context
+    const { targetUserId } = context.params;
+
     if (!targetUserId) {
       return NextResponse.json(
         { error: "targetUserId is required" },
@@ -23,7 +21,7 @@ export async function POST(
       );
     }
 
-    // ตรวจสอบว่าผู้ใช้ปัจจุบัน (current user) มีอยู่ในฐานข้อมูลหรือไม่
+    // ตรวจสอบว่าผู้ใช้ปัจจุบันมีอยู่ในฐานข้อมูลหรือไม่
     const existingUser = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
@@ -34,7 +32,7 @@ export async function POST(
       );
     }
 
-    // ตรวจสอบว่าผู้ใช้เป้าหมาย (target user) มีอยู่ในฐานข้อมูลหรือไม่
+    // ตรวจสอบว่าผู้ใช้เป้าหมายมีอยู่ในฐานข้อมูลหรือไม่
     const targetUser = await prisma.user.findUnique({
       where: { id: targetUserId },
     });
@@ -45,7 +43,7 @@ export async function POST(
       );
     }
 
-    // ตรวจสอบว่าผู้ใช้ปัจจุบันได้ติดตามผู้ใช้เป้าหมายแล้วหรือยัง
+    // ตรวจสอบสถานะการติดตาม
     const existingFollow = await prisma.follower.findUnique({
       where: {
         followerId_followingId: {
@@ -55,14 +53,13 @@ export async function POST(
       },
     });
     if (existingFollow) {
-      // หากมีข้อมูลการติดตามอยู่แล้ว ให้ส่งกลับสถานะและข้อความว่า "Already following"
       return NextResponse.json(
         { alreadyFollowing: true, message: "Already following" },
         { status: 200 }
       );
     }
 
-    // หากยังไม่ได้ติดตาม ให้สร้าง record ใหม่ในตาราง follower เพื่อบันทึกการติดตาม
+    // สร้าง record การติดตามใหม่
     await prisma.follower.create({
       data: {
         followerId: session.user.id,
@@ -70,7 +67,6 @@ export async function POST(
       },
     });
 
-    // ส่ง response กลับไปเมื่อการติดตามสำเร็จ
     return NextResponse.json({
       alreadyFollowing: false,
       message: "Followed successfully",
@@ -87,12 +83,10 @@ export async function POST(
     );
   }
 }
-export async function GET(
-  request: Request,
-  { params }: { params: { targetUserId: string } }
-) {
+
+export async function GET(request: Request, context: any) {
   try {
-    const { targetUserId } = await Promise.resolve(params);
+    const { targetUserId } = context.params;
     if (!targetUserId) {
       return NextResponse.json(
         { error: "targetUserId is required" },
@@ -111,8 +105,6 @@ export async function GET(
         },
       },
     });
-    // หากมีการติดตามอยู่ส่งกลับ { alreadyFollowing: true }
-    // หากไม่มีส่งกลับ { alreadyFollowing: false }
     return NextResponse.json({ alreadyFollowing: !!existingFollow });
   } catch (error: any) {
     console.error("Error checking follow status:", error);

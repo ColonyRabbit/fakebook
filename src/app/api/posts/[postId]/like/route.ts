@@ -1,17 +1,14 @@
 import { NextResponse } from "next/server";
-import prisma from "../../../../../../lib/prisma";
 import { getServerSession } from "next-auth";
-import { authOptions } from "../../../auth/[...nextauth]/route";
+import { authOptions } from "../../../../../../lib/authOptions";
+import prisma from "../../../../../../lib/prisma";
 
-export async function POST(
-  request: Request,
-  { params }: { params: { postId: string } }
-) {
+export async function POST(request: Request, context: any) {
   try {
-    // รับข้อมูล userId จาก body
+    // ดึง session จาก NextAuth
     const session = await getServerSession(authOptions);
-    // await ค่า params ก่อนใช้งาน
-    const { postId } = await Promise.resolve(params);
+    // รับ target post ID จาก context (ไม่ต้อง await กับ params)
+    const { postId } = context.params;
 
     if (!session || !postId) {
       return NextResponse.json(
@@ -31,7 +28,7 @@ export async function POST(
     });
 
     if (existingLike) {
-      // ลบไลค์ออก (unlike)
+      // หากมี like อยู่แล้ว ให้ลบไลค์ (unlike)
       await prisma.like.delete({
         where: {
           userId_postId: {
@@ -41,7 +38,7 @@ export async function POST(
         },
       });
     } else {
-      // เพิ่มไลค์ (like)
+      // หากไม่มีให้เพิ่มไลค์ (like)
       await prisma.like.create({
         data: {
           userId: session.user.id,
@@ -65,13 +62,13 @@ export async function POST(
     });
 
     return NextResponse.json(
-      { ...updatedPost, alreadyLike: true },
+      { ...updatedPost, alreadyLike: !!existingLike },
       { status: 200 }
     );
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error liking post:", error);
     return NextResponse.json(
-      { error: "เกิดข้อผิดพลาดในการจัดการไลค์" },
+      { error: "เกิดข้อผิดพลาดในการจัดการไลค์", details: error.message },
       { status: 500 }
     );
   }
