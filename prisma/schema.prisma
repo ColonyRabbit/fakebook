@@ -37,8 +37,6 @@ model Post {
   @@index([userId])
 }
 
-}
-
 model Follower {
   /// ID ของผู้ใช้ที่ติดตาม (ผู้ติดตาม)
   followerId  String
