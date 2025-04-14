@@ -78,7 +78,7 @@ const ProfileSettings = () => {
       }
 
       const res = await fetch("/api/register", {
-        method: "POST",
+        method: "PATCH",
         body: formData,
         credentials: "include",
       });

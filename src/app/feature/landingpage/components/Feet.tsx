@@ -18,6 +18,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button } from "../../../../components/ui/button";
+import Allcomments from "./Allcomments";
 
 interface PostWithUser extends PrismaPost {
   user: PrismaUser;
@@ -28,7 +29,7 @@ interface PostWithUser extends PrismaPost {
   isLiked: boolean;
 }
 
-const Feed = () => {
+const Feet = () => {
   const [posts, setPosts] = useState<PostWithUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,12 +37,15 @@ const Feed = () => {
   const { data: session } = useSession();
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
+  const [expandedComments, setExpandedComments] = useState<{
+    [postId: string]: boolean;
+  }>({});
 
   const fetchPosts = useCallback(async () => {
     try {
       setLoading(true);
       const url = session?.user?.id
-        ? `/api/posts?userId=${session?.user?.id}`
+        ? `/api/posts?userId=${session.user.id}`
         : `/api/posts`;
       const response = await fetch(url, { method: "GET" });
       if (!response.ok) throw new Error("Failed to fetch posts");
@@ -56,20 +60,33 @@ const Feed = () => {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (session) fetchPosts();
+    if (session) {
+      fetchPosts();
+    }
   }, [session, fetchPosts]);
 
   const handleLike = useCallback(
     async (postId?: string) => {
-      if (!postId || !session?.user?.id || likeInProgress === postId) return;
+      if (!postId) return;
       try {
+        if (!session?.user?.id) {
+          toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
+          return;
+        }
+        if (likeInProgress === postId) return;
         setLikeInProgress(postId);
+
         const response = await fetch(`/api/posts/${postId}/like`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: session.user.id }),
         });
-        if (!response.ok) throw new Error("Failed to update like status");
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || "Failed to update like status");
+        }
+
         const updatedPost = await response.json();
         setPosts((prevPosts) =>
           prevPosts.map((post) =>
@@ -77,6 +94,7 @@ const Feed = () => {
           )
         );
       } catch (error: any) {
+        console.error("Error liking post:", error);
         toast.error(error.message);
       } finally {
         setLikeInProgress(null);
@@ -85,6 +103,14 @@ const Feed = () => {
     [session, likeInProgress]
   );
 
+  const handleShowComments = (postId: string) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+
+  // ฟังก์ชัน Edit, Delete, Save, Cancel (ยังคงเหมือนเดิม)
   const handleEdit = (postId: string, currentContent: string) => {
     setEditingPostId(postId);
     setEditedContent(currentContent);
@@ -93,21 +119,6 @@ const Feed = () => {
   const handleCancelEdit = () => {
     setEditingPostId(null);
     setEditedContent("");
-  };
-
-  const handleDelete = async (postId: string) => {
-    try {
-      const response = await fetch(`/api/posts`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
-      if (!response.ok) throw new Error("Failed to delete post");
-      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
-      toast.success("Post deleted successfully");
-    } catch (error: any) {
-      toast.error(error.message);
-    }
   };
 
   const handleSaveEdit = async (postId: string) => {
@@ -127,6 +138,21 @@ const Feed = () => {
       toast.success("Post updated successfully");
       setEditingPostId(null);
       setEditedContent("");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleDelete = async (postId: string) => {
+    try {
+      const response = await fetch(`/api/posts`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      if (!response.ok) throw new Error("Failed to delete post");
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      toast.success("Post deleted successfully");
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -161,84 +187,53 @@ const Feed = () => {
 
         {posts.map((post) => (
           <div
-            key={post?.id}
+            key={post.id}
             className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
           >
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
-                <Link href={`/profile/${post?.user?.id}`} className="group">
-                  <div className="flex items-center gap-3">
-                    <div className="relative h-12 w-12">
-                      {post.user?.photoUrl ? (
-                        <Image
-                          src={post.user?.photoUrl}
-                          alt={post.user?.username || "User"}
-                          fill
-                          className="rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="rounded-full bg-gray-100 h-full w-full flex items-center justify-center">
-                          <span className="text-gray-500 text-sm">
-                            No Image
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
-                        {post.user?.username || "Anonymous"}
-                      </p>
-                      <p className="text-sm text-gray-500">
-                        {new Date(post.createdAt).toLocaleDateString(
-                          undefined,
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          }
-                        )}
-                      </p>
-                    </div>
+                <Link href={`/profile/${post.user?.id}`}>
+                  <div className="flex items-center gap-3 cursor-pointer">
+                    {post.user?.photoUrl ? (
+                      <Image
+                        src={post.user.photoUrl}
+                        alt={post.user.username}
+                        width={48}
+                        height={48}
+                        className="rounded-full w-12 h-12 object-cover"
+                      />
+                    ) : (
+                      <div className="rounded-full bg-gray-100 w-12 h-12 flex items-center justify-center">
+                        <span className="text-gray-500 text-lg font-bold">
+                          {post.user.username.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    <p className="font-semibold text-gray-900">
+                      {post.user.username || "Anonymous"}
+                    </p>
                   </div>
                 </Link>
-
-                {session?.user?.id === post?.user?.id && (
-                  <div className="flex gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEdit(post?.id, post?.content)}
-                      className="text-gray-500 hover:text-blue-600"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(post?.id)}
-                      className="text-gray-500 hover:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <span className="text-sm text-gray-500">
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </span>
               </div>
 
-              {editingPostId === post?.id ? (
+              {editingPostId === post.id ? (
                 <div className="space-y-3">
                   <textarea
                     value={editedContent}
                     onChange={(e) => setEditedContent(e.target.value)}
-                    className="w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
+                    className="w-full p-3 border border-gray-200 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-shadow"
                     rows={4}
                   />
                   <div className="flex gap-2">
-                    <Button onClick={() => handleSaveEdit(post?.id)} size="sm">
+                    <Button onClick={() => handleSaveEdit(post.id)} size="sm">
                       Save
                     </Button>
                     <Button
                       onClick={handleCancelEdit}
-                      variant="outline"
+                      variant="ghost"
                       size="sm"
                     >
                       Cancel
@@ -246,15 +241,35 @@ const Feed = () => {
                   </div>
                 </div>
               ) : (
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {post.content}
-                </p>
+                <>
+                  <p className="text-gray-700 mb-4">{post.content}</p>
+                  {session?.user?.id === post.user?.id && (
+                    <div className="flex gap-2 mb-4">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(post.id, post.content)}
+                        className="text-gray-500 hover:text-blue-600"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDelete(post.id)}
+                        className="text-gray-500 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
 
-              <div className="flex items-center gap-6 mt-6 pt-4 border-t">
+              <div className="flex items-center gap-6 pt-4 border-t my-6">
                 <button
-                  onClick={() => handleLike(post?.id)}
-                  disabled={!session || likeInProgress === post?.id}
+                  onClick={() => handleLike(post.id)}
+                  disabled={!session || likeInProgress === post.id}
                   className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                     post.isLiked
                       ? "text-blue-600"
@@ -264,31 +279,33 @@ const Feed = () => {
                   <ThumbsUp
                     className={`h-5 w-5 ${post.isLiked ? "fill-current" : ""}`}
                   />
-                  <span>{post?._count?.likes}</span>
+                  <span>{post._count?.likes}</span>
                 </button>
-
-                <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                <button
+                  onClick={() =>
+                    setExpandedComments((prev) => ({
+                      ...prev,
+                      [post.id]: !prev[post.id],
+                    }))
+                  }
+                  className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                >
                   <MessageSquare className="h-5 w-5" />
                   <span>Comment</span>
                 </button>
-
                 <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
                   <Share2 className="h-5 w-5" />
                   <span>Share</span>
                 </button>
               </div>
+              {/* แสดงคอมเมนต์เฉพาะโพสต์นี้โดยตรวจสอบจาก expandedComments */}
+              {expandedComments[post.id] && <Allcomments postId={post.id} />}
             </div>
           </div>
         ))}
       </div>
-
-      {!session && (
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center">
-          <p className="text-gray-600">Please sign in to interact with posts</p>
-        </div>
-      )}
     </div>
   );
 };
 
-export default Feed;
+export default Feet;
