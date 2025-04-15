@@ -25,7 +25,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true, // ✅ ข้าม ESLint เมื่อ build
   },
-  experimental: {},
+  experimental: {
+    turbo: {}, // ❌ ปิด Turbopack ไปก่อน by providing an empty configuration
+  },
 };
 
 export default nextConfig;
