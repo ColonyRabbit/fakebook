@@ -1,14 +1,8 @@
 "use client";
 import Image from "next/image";
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import {
-  Post as PrismaPost,
-  User as PrismaUser,
-  Like as PrismaLike,
-} from "@prisma/client";
-import { toast } from "react-hot-toast";
 import {
   MessageSquare,
   Share2,
@@ -17,21 +11,14 @@ import {
   Pencil,
   Trash2,
 } from "lucide-react";
+import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import Allcomments from "./Allcomments";
-
-interface PostWithUser extends PrismaPost {
-  user: PrismaUser;
-  likes: PrismaLike[];
-  _count: {
-    likes: number;
-  };
-  isLiked: boolean;
-}
+import { IResIResponsePostsType } from "../../../type/postType";
 
 const Feet = () => {
   const { data: session } = useSession();
-  const [posts, setPosts] = useState<PostWithUser[]>([]);
+  const [posts, setPosts] = useState<IResIResponsePostsType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [likeInProgress, setLikeInProgress] = useState<string | null>(null);
@@ -41,65 +28,65 @@ const Feet = () => {
     [postId: string]: boolean;
   }>({});
 
-  const fetchPosts = useCallback(async () => {
-    try {
-      setLoading(true);
-      const url = session?.user?.id
-        ? `/api/posts?userId=${session.user.id}`
-        : `/api/posts`;
-      const response = await fetch(url, { method: "GET" });
-      if (!response.ok) throw new Error("Failed to fetch posts");
-      const data = await response.json();
-      setPosts(Array.isArray(data) ? data : data.posts || []);
-    } catch (err) {
-      console.error(err);
-      setError("Could not load posts");
-    } finally {
-      setLoading(false);
-    }
-  }, [session?.user?.id]);
-
   useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const url = session?.user?.id
+          ? `/api/posts?userId=${session.user.id}`
+          : `/api/posts`;
+
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error("Failed to fetch posts");
+
+        const data = await response.json();
+        console.log("Fetched posts:", data);
+        setPosts(data.posts);
+      } catch (err) {
+        console.error(err);
+        setError("Could not load posts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchPosts();
   }, []);
 
-  const handleLike = useCallback(
-    async (postId?: string) => {
-      if (!postId) return;
-      try {
-        if (!session?.user?.id) {
-          toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
-          return;
-        }
-        if (likeInProgress === postId) return;
-        setLikeInProgress(postId);
-
-        const response = await fetch(`/api/posts/${postId}/like`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: session.user.id }),
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || "Failed to update like status");
-        }
-
-        const updatedPost = await response.json();
-        setPosts((prevPosts) =>
-          prevPosts.map((post) =>
-            post.id === updatedPost.id ? updatedPost : post
-          )
-        );
-      } catch (error: any) {
-        console.error("Error liking post:", error);
-        toast.error(error.message);
-      } finally {
-        setLikeInProgress(null);
+  const handleLike = async (postId?: string) => {
+    if (!postId) return;
+    try {
+      if (!session?.user?.id) {
+        toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
+        return;
       }
-    },
-    [session, likeInProgress]
-  );
+      if (likeInProgress === postId) return;
+      setLikeInProgress(postId);
+
+      const response = await fetch(`/api/posts/${postId}/like`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: session.user.id }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json();
+        throw new Error(errData.error || "Failed to update like status");
+      }
+
+      const updatedPost = await response.json();
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === updatedPost.id ? updatedPost : post
+        )
+      );
+    } catch (error: any) {
+      console.error("Error liking post:", error);
+      toast.error(error.message);
+    } finally {
+      setLikeInProgress(null);
+    }
+  };
 
   const handleShowComments = (postId: string) => {
     setExpandedComments((prev) => ({
@@ -108,7 +95,6 @@ const Feet = () => {
     }));
   };
 
-  // ฟังก์ชัน Edit, Delete, Save, Cancel (ยังคงเหมือนเดิม)
   const handleEdit = (postId: string, currentContent: string) => {
     setEditingPostId(postId);
     setEditedContent(currentContent);
@@ -177,13 +163,13 @@ const Feet = () => {
       )}
 
       <div className="space-y-6">
-        {posts.length === 0 && !loading && (
+        {posts?.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No posts yet</p>
           </div>
         )}
 
-        {posts.map((post) => (
+        {posts?.map((post) => (
           <div
             key={post.id}
             className="bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200"
@@ -264,39 +250,38 @@ const Feet = () => {
                 </>
               )}
 
-              <div className="flex items-center gap-6 pt-4 border-t my-6">
-                <button
-                  onClick={() => handleLike(post.id)}
-                  disabled={!session || likeInProgress === post.id}
-                  className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                    post.isLiked
-                      ? "text-blue-600"
-                      : "text-gray-500 hover:text-blue-600"
-                  }`}
-                >
-                  <ThumbsUp
-                    className={`h-5 w-5 ${post.isLiked ? "fill-current" : ""}`}
-                  />
-                  <span>{post._count?.likes}</span>
-                </button>
-                <button
-                  onClick={() =>
-                    setExpandedComments((prev) => ({
-                      ...prev,
-                      [post.id]: !prev[post.id],
-                    }))
-                  }
-                  className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                  <span>Comment</span>
-                </button>
-                <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
-                  <Share2 className="h-5 w-5" />
-                  <span>Share</span>
-                </button>
-              </div>
-              {/* แสดงคอมเมนต์เฉพาะโพสต์นี้โดยตรวจสอบจาก expandedComments */}
+              {session && (
+                <div className="flex items-center gap-6 pt-4 border-t my-6">
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    disabled={!session || likeInProgress === post.id}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+                      post.isLiked
+                        ? "text-blue-600"
+                        : "text-gray-500 hover:text-blue-600"
+                    }`}
+                  >
+                    <ThumbsUp
+                      className={`h-5 w-5 ${
+                        post.isLiked ? "fill-current" : ""
+                      }`}
+                    />
+                    <span>{post.likeCount}</span>
+                  </button>
+                  <button
+                    onClick={() => handleShowComments(post.id)}
+                    className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors"
+                  >
+                    <MessageSquare className="h-5 w-5" />
+                    <span>Comment</span>
+                  </button>
+                  <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors">
+                    <Share2 className="h-5 w-5" />
+                    <span>Share</span>
+                  </button>
+                </div>
+              )}
+
               {expandedComments[post.id] && <Allcomments postId={post.id} />}
             </div>
           </div>
