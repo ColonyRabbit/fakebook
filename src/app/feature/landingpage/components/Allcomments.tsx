@@ -7,6 +7,7 @@ import { MessageSquare, Loader2, Pencil, Trash2, Check, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import { Textarea } from "../../../../../@/components/ui/textarea";
+import Link from "next/link";
 
 export interface User {
   id?: string;
@@ -196,22 +197,24 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
                 className="flex gap-4 p-4 bg-gray-50 rounded-lg"
               >
                 <div className="flex-shrink-0">
-                  <div className="relative h-10 w-10">
-                    {comment.user?.photoUrl ? (
-                      <Image
-                        src={comment.user.photoUrl}
-                        alt={comment.user.username || "User"}
-                        fill
-                        className="rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="h-full w-full rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-500 text-sm">
-                          {(comment.user?.username || "U")[0].toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  <Link href={`/profile/${comment.user?.id}`}>
+                    <div className="relative h-10 w-10">
+                      {comment.user?.photoUrl ? (
+                        <Image
+                          src={comment.user.photoUrl}
+                          alt={comment.user.username || "User"}
+                          fill
+                          className="rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-full w-full rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-500 text-sm">
+                            {(comment.user?.username || "U")[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </Link>
                 </div>
                 <div className="flex-grow">
                   <div className="flex items-center gap-2 mb-1">

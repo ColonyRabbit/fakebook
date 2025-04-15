@@ -4,6 +4,9 @@ import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/Theme-provider";
 import Navbar from "../components/Navbar/Navbar";
 import SessionWrapper from "../components/SessionWrapper";
+import ChatPage from "../components/PrivateChat";
+import PrivateChat from "../components/PrivateChat";
+import FloatingChatWrapper from "../components/PrivateChat";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,8 +42,8 @@ export default function RootLayout({
           <SessionWrapper>
             <Navbar />
             <Toaster position="top-center" />
-
             {children}
+            <FloatingChatWrapper /> {/* ลอยแบบ Facebook + แก้ error */}
           </SessionWrapper>
         </ThemeProvider>
       </body>
