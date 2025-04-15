@@ -30,11 +30,11 @@ interface PostWithUser extends PrismaPost {
 }
 
 const Feet = () => {
+  const { data: session } = useSession();
   const [posts, setPosts] = useState<PostWithUser[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [likeInProgress, setLikeInProgress] = useState<string | null>(null);
-  const { data: session } = useSession();
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [editedContent, setEditedContent] = useState<string>("");
   const [expandedComments, setExpandedComments] = useState<{
@@ -60,10 +60,8 @@ const Feet = () => {
   }, [session?.user?.id]);
 
   useEffect(() => {
-    if (session) {
-      fetchPosts();
-    }
-  }, [session, fetchPosts]);
+    fetchPosts();
+  }, []);
 
   const handleLike = useCallback(
     async (postId?: string) => {
@@ -197,7 +195,7 @@ const Feet = () => {
                     {post.user?.photoUrl ? (
                       <Image
                         src={post.user.photoUrl}
-                        alt={post.user.username}
+                        alt={post.user?.username}
                         width={48}
                         height={48}
                         className="rounded-full w-12 h-12 object-cover"
@@ -205,12 +203,12 @@ const Feet = () => {
                     ) : (
                       <div className="rounded-full bg-gray-100 w-12 h-12 flex items-center justify-center">
                         <span className="text-gray-500 text-lg font-bold">
-                          {post.user.username.charAt(0).toUpperCase()}
+                          {post.user?.username.charAt(0).toUpperCase()}
                         </span>
                       </div>
                     )}
                     <p className="font-semibold text-gray-900">
-                      {post.user.username || "Anonymous"}
+                      {post.user?.username || "Anonymous"}
                     </p>
                   </div>
                 </Link>
