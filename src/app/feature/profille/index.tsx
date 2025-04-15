@@ -74,7 +74,7 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   useEffect(() => {
     if (session && id) fetchUser();
-  }, [session, id]);
+  }, []);
 
   useEffect(() => {
     if (user?.id && session) fetchFollower();
@@ -182,7 +182,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                 alt={user.username}
                 width={128}
                 height={128}
-                className="rounded-full ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-800"
+                className="rounded-full w-32 h-32 object-cover ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-800"
               />
             ) : (
               <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
