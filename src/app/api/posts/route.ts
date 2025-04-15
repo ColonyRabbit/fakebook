@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       include: {
         user: true,
         _count: { select: { likes: true } },
-        likes: session.user?.id
+        likes: session?.user?.id
           ? {
               where: { userId: session.user?.id },
               select: { userId: true },
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
       user: post.user,
       likeCount: post._count.likes,
       // สถานะ like ของผู้ใช้ปัจจุบัน
-      isLiked: session.user?.id ? post.likes.length > 0 : false,
+      isLiked: session?.user?.id ? post.likes.length > 0 : false,
       comments: post.content, // ถ้าต้องการ
     }));
 
