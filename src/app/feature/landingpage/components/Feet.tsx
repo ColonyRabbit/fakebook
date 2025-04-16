@@ -18,6 +18,8 @@ import { IResIResponsePostsType } from "../../../type/postType";
 
 const Feet = () => {
   const { data: session } = useSession();
+  console.log("session>>>", session);
+
   const [posts, setPosts] = useState<IResIResponsePostsType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,7 +186,7 @@ const Feet = () => {
                         alt={post.user?.username}
                         width={48}
                         height={48}
-                        className="rounded-full w-12 h-12 object-cover"
+                        className="rounded-full w-12 h-12 object-fill"
                       />
                     ) : (
                       <div className="rounded-full bg-gray-100 w-12 h-12 flex items-center justify-center">

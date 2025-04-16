@@ -1,4 +1,4 @@
-import IndexProfile from "../../feature/profille";
+import IndexProfile from "../../feature/profille/IndexProfile";
 
 export async function generateMetadata({ params }: { params: any }) {
   const { id } = params;
