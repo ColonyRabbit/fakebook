@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -23,62 +22,50 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../../@/components/ui/tabs";
+import usersApi from "../../service/usersApi";
+import clsx from "clsx";
+import { FullUser } from "../../type/userType";
 
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [user, setUser] = useState<any>();
+  const [user, setUser] = useState<FullUser | any>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState("posts");
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!session || !id) return;
+      try {
+        setLoading(true);
+        const userRes = await usersApi.getUser(id);
+        setUser(userRes);
 
-  const fetchUser = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`/api/users/${id}`, { method: "GET" });
-      if (!res.ok) throw new Error(`Error: ${res.status}`);
-      const data = await res.json();
-      setUser(data);
-    } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้"
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+        const res = await fetch(`/api/follow/${userRes.id}`, {
+          method: "GET",
+          credentials: "include",
+        });
 
-  const fetchFollower = async () => {
-    if (!user?.id || !session) return;
-    try {
-      const res = await fetch(`/api/follow/${user.id}?checkStatus=true`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.ok) {
-        const result = await res.json();
-        setIsFollowing(result.alreadyFollowing);
-      } else {
-        const data = await res.json();
-        if (data.error === "Not following") {
-          setIsFollowing(false);
+        if (res.ok) {
+          const result = await res.json();
+          setIsFollowing(result.alreadyFollowing);
+        } else {
+          const data = await res.json();
+          if (data.error === "Not following") {
+            setIsFollowing(false);
+          }
         }
+      } catch (err) {
+        setError("เกิดข้อผิดพลาดในการโหลดข้อมูลผู้ใช้");
+        console.error(err);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Error fetching follower status:", error);
-    }
-  };
+    };
 
-  useEffect(() => {
-    if (session && id) fetchUser();
-  }, []);
-
-  useEffect(() => {
-    if (user?.id && session) fetchFollower();
-  }, [user?.id, session]);
+    fetchData();
+  }, [session, id]);
 
   const handleFollow = async (targetUserId: string) => {
     try {
@@ -204,7 +191,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                 <LinkIcon className="w-4 h-4 mr-2" />
                 <span>
                   ร่วมเป็นสมาชิกเมื่อ{" "}
-                  {new Date(user?.createdAt).toLocaleDateString("th-TH", {
+                  {new Date(user.createdAt).toLocaleDateString("th-TH", {
                     year: "numeric",
                     month: "long",
                     day: "numeric",
@@ -227,7 +214,7 @@ const IndexProfile = ({ id }: { id: string }) => {
             <div className="mt-6">
               {session.user.id === user.id ? (
                 <Button
-                  onClick={() => router.push(`/profile/${user?.id}/setting`)}
+                  onClick={() => router.push(`/profile/${user.id}/setting`)}
                   variant="outline"
                   className="w-full md:w-auto"
                 >
@@ -272,6 +259,7 @@ const IndexProfile = ({ id }: { id: string }) => {
             ผู้ติดตาม
           </TabsTrigger>
         </TabsList>
+
         <TabsContent value="posts" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">โพสต์ล่าสุด</h3>
@@ -280,6 +268,7 @@ const IndexProfile = ({ id }: { id: string }) => {
             </p>
           </Card>
         </TabsContent>
+
         <TabsContent value="about" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">ข้อมูลผู้ใช้</h3>
@@ -291,6 +280,7 @@ const IndexProfile = ({ id }: { id: string }) => {
             </div>
           </Card>
         </TabsContent>
+
         <TabsContent value="followers" className="mt-6">
           <Card className="p-6">
             <h3 className="text-xl font-semibold mb-4">ผู้ติดตาม</h3>

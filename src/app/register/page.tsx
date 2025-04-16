@@ -1,5 +1,5 @@
 import React from "react";
-import IndexRegister from "../feature/register";
+import IndexRegister from "../feature/register/IndexRegister";
 
 const page = () => {
   return <IndexRegister />;

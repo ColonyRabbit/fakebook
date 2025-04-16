@@ -1,18 +1,21 @@
-export type PostType = {
+export type IResIResponsePostsType = {
   id: string;
-  postText: string;
-  createdAt: string;
-  updatedAt: string;
-  user: {
-    id: string;
-    username: string;
-    photo?: string;
-  };
-  username?: string;
+  photoUrl: string;
+  content: string;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string;
+  user: User;
+  likeCount: number;
   isLiked: boolean;
-  likeCount?: number;
-  likes?: Array<{ userId: string }>;
-  _count?: {
-    likes: number;
-  };
+  comments: string;
 };
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  photoUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
