@@ -11,7 +11,6 @@ export async function POST(request: Request) {
     // ค้นหาผู้ใช้ตาม email ในฐานข้อมูลด้วย Prisma
     const user = await prisma.user.findUnique({ where: { email } });
     console.log("User found in database:", user); // สำหรับดีบัก
-    // หากไม่พบผู้ใช้หรือรหัสผ่านไม่ถูกต้อง ให้ส่ง error กลับไป
     if (!user) {
       console.log("Login failed: user not found");
       return NextResponse.json(

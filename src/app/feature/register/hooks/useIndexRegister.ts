@@ -2,11 +2,11 @@ import React, { useRef, useState } from "react";
 import registerApi from "../../../service/registerApi";
 import { IRequestRegisterType } from "../../../type/registerType";
 import { z } from "zod";
-import { useRouter } from "next/router";
+// import { useRouter } from "next/router";
 
 const useIndexRegister = () => {
   //use Router
-  const router = useRouter();
+  // const router = useRouter();
   //local state
   const [data, setData] = useState<IRequestRegisterType>({
     username: "",
@@ -90,7 +90,7 @@ const useIndexRegister = () => {
       }
       const response = await registerApi.registerUser(formData);
       console.log("Response from API:", response);
-      router.push("/login?registered=true");
+      // router.push("/login");
     } catch (error) {
       console.error("เกิดข้อผิดพลาด:", error);
       setGlobalError(

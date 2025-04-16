@@ -96,13 +96,13 @@ const Navbar = () => {
           </div>
 
           {/* Actions Section */}
-          <div className="flex items-center justify-end space-x-4">
+          <div className="flex items-center justify-end space-x-4 max-md:justify-center">
             <ThemeToggle />
 
             {status === "loading" ? (
               <Skeleton className="w-12 h-12 rounded-full" />
             ) : session ? (
-              <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-4 ">
                 {/* User Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -165,7 +165,7 @@ const Navbar = () => {
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 ">
                 <Button
                   variant="ghost"
                   onClick={handleSignIn}

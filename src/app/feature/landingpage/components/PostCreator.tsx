@@ -86,9 +86,9 @@ export default function PostCreator() {
           {user?.photoUrl ? (
             <Image
               src={user.photoUrl}
-              className="rounded-full ring-2 ring-offset-2 ring-gray-100 dark:ring-gray-800"
-              width={40}
-              height={40}
+              className="rounded-full w-12 h-12 ring-2 ring-offset-2 ring-gray-100 dark:ring-gray-800 object-fill"
+              width={48}
+              height={48}
               alt={`${user.username}'s avatar`}
             />
           ) : (
