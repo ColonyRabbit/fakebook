@@ -15,6 +15,7 @@ import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import Allcomments from "./Allcomments";
 import { IResIResponsePostsType } from "../../../type/postType";
+import ButtonLike from "./ButtonLike";
 
 const Feet = () => {
   const { data: session } = useSession();
@@ -29,66 +30,6 @@ const Feet = () => {
   const [expandedComments, setExpandedComments] = useState<{
     [postId: string]: boolean;
   }>({});
-
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        setLoading(true);
-        const url = session?.user?.id
-          ? `/api/posts?userId=${session.user.id}`
-          : `/api/posts`;
-
-        const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error("Failed to fetch posts");
-
-        const data = await response.json();
-        console.log("Fetched posts:", data);
-        setPosts(data.posts);
-      } catch (err) {
-        console.error(err);
-        setError("Could not load posts");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPosts();
-  }, []);
-
-  const handleLike = async (postId?: string) => {
-    if (!postId) return;
-    try {
-      if (!session?.user?.id) {
-        toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
-        return;
-      }
-      if (likeInProgress === postId) return;
-      setLikeInProgress(postId);
-
-      const response = await fetch(`/api/posts/${postId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.user.id }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to update like status");
-      }
-
-      const updatedPost = await response.json();
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
-        )
-      );
-    } catch (error: any) {
-      console.error("Error liking post:", error);
-      toast.error(error.message);
-    } finally {
-      setLikeInProgress(null);
-    }
-  };
 
   const handleShowComments = (postId: string) => {
     setExpandedComments((prev) => ({
@@ -143,7 +84,30 @@ const Feet = () => {
       toast.error(error.message);
     }
   };
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const url = session?.user?.id
+          ? `/api/posts?userId=${session.user.id}`
+          : `/api/posts`;
 
+        const response = await fetch(url, { method: "GET" });
+        if (!response.ok) throw new Error("Failed to fetch posts");
+
+        const data = await response.json();
+        console.log("Fetched posts:", data);
+        setPosts(data.posts);
+      } catch (err) {
+        console.error(err);
+        setError("Could not load posts");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPosts();
+  }, []);
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -254,22 +218,13 @@ const Feet = () => {
 
               {session && (
                 <div className="flex items-center gap-6 pt-4 border-t my-6">
-                  <button
-                    onClick={() => handleLike(post.id)}
-                    disabled={!session || likeInProgress === post.id}
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                      post.isLiked
-                        ? "text-blue-600"
-                        : "text-gray-500 hover:text-blue-600"
-                    }`}
-                  >
-                    <ThumbsUp
-                      className={`h-5 w-5 ${
-                        post.isLiked ? "fill-current" : ""
-                      }`}
-                    />
-                    <span>{post.likeCount}</span>
-                  </button>
+                  <ButtonLike
+                    post={post}
+                    session={session}
+                    likeInProgress={likeInProgress}
+                    setLikeInProgress={setLikeInProgress}
+                    setPosts={setPosts}
+                  />
                   <button
                     onClick={() => handleShowComments(post.id)}
                     className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors"
