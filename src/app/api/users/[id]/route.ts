@@ -13,16 +13,10 @@ export async function GET(request: Request, context: any) {
       where: { id },
       include: {
         followers: {
-          include: {
-            // ดึงข้อมูลของผู้ที่ทำการติดตาม
-            follower: true,
-          },
+          include: { follower: true },
         },
-        // หากต้องการข้อมูลของ people ที่ผู้ใช้ติดตาม (following) ให้ include แบบนี้ได้เช่นกัน
         following: {
-          include: {
-            following: true,
-          },
+          include: { following: true },
         },
       },
     });

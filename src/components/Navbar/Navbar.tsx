@@ -9,8 +9,9 @@ import Image from "next/image";
 import { Button } from "../ui/button";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Settings, LogOut, LogIn, UserPlus } from "lucide-react";
+import { Settings, LogOut, LogIn, UserPlus, Loader2 } from "lucide-react";
 import { User } from "@prisma/client";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,16 +19,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
+import { Skeleton } from "../../../@/components/ui/skeleton";
 
 const Navbar = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const route = useRouter();
   const pathName = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (session?.user?.id) {
       const fetchUser = async () => {
+        setIsLoading(true);
         try {
           const response = await fetch(`/api/users/${session.user.id}`, {
             method: "GET",
@@ -35,12 +40,20 @@ const Navbar = () => {
               "Content-Type": "application/json",
             },
           });
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch user data");
+          }
+
           const data = await response.json();
           if (data) {
             setUser(data);
           }
         } catch (error) {
           console.error("Error fetching user:", error);
+          toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง");
+        } finally {
+          setIsLoading(false);
         }
       };
       fetchUser();
@@ -48,14 +61,30 @@ const Navbar = () => {
   }, [session?.user?.id]);
 
   const handleSignOut = async () => {
-    await signOut();
-    route.push("/");
+    try {
+      setIsSigningOut(true);
+      await signOut();
+      route.push("/");
+      toast.success("ออกจากระบบสำเร็จ");
+    } catch (error) {
+      toast.error("เกิดข้อผิดพลาดในการออกจากระบบ กรุณาลองใหม่อีกครั้ง");
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
+  const handleSignIn = async () => {
+    try {
+      await signIn();
+    } catch (error) {
+      toast.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง");
+    }
   };
 
   return (
-    <nav className="w-full bg-[#375b93] sticky top-0 z-50 shadow-lg">
+    <nav className="w-full bg-[#375b93] sticky top-0 z-50 shadow-lg ">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
-        <div className="grid grid-cols-3 items-center gap-4">
+        <div className="grid grid-cols-3 items-center gap-4 max-sm:grid-cols-1">
           {/* Logo Section */}
           <div className="flex items-center">
             <Logo />
@@ -67,25 +96,34 @@ const Navbar = () => {
           </div>
 
           {/* Actions Section */}
-          <div className="flex items-center justify-end space-x-4">
+          <div className="flex items-center justify-end space-x-4 max-md:justify-center">
             <ThemeToggle />
 
-            {session ? (
-              <div className="flex items-center space-x-4">
+            {status === "loading" ? (
+              <Skeleton className="w-12 h-12 rounded-full" />
+            ) : session ? (
+              <div className="flex items-center space-x-4 ">
                 {/* User Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="relative w-auto h-auto rounded-full"
+                      className="relative w-auto h-auto rounded-full focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#375b93]"
+                      disabled={isLoading}
                     >
-                      <Image
-                        src={user?.photoUrl || "/default-avatar.jpg"}
-                        alt="Profile"
-                        width={48}
-                        height={48}
-                        className="rounded-full object-contain  w-12 h-12 border-2 border-white hover:border-opacity-75 transition-all"
-                      />
+                      {isLoading ? (
+                        <div className="w-12 h-12 rounded-full flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-white" />
+                        </div>
+                      ) : (
+                        <Image
+                          src={user?.photoUrl || "/default-avatar.jpg"}
+                          alt="Profile"
+                          width={48}
+                          height={48}
+                          className="rounded-full object-contain w-12 h-12 border-2 border-white hover:border-opacity-75 transition-all"
+                        />
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -114,18 +152,23 @@ const Navbar = () => {
                     <DropdownMenuItem
                       onClick={handleSignOut}
                       className="cursor-pointer text-red-600 focus:text-red-600"
+                      disabled={isSigningOut}
                     >
-                      <LogOut className="mr-2 h-4 w-4" />
+                      {isSigningOut ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <LogOut className="mr-2 h-4 w-4" />
+                      )}
                       <span>ออกจากระบบ</span>
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 ">
                 <Button
                   variant="ghost"
-                  onClick={() => signIn()}
+                  onClick={handleSignIn}
                   className="text-white hover:bg-white/20"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
