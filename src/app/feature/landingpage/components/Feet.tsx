@@ -14,13 +14,14 @@ import {
 import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import Allcomments from "./Allcomments";
-import { IResIResponsePostsType } from "../../../type/postType";
+import { Post } from "../../../type/postType";
+import ButtonLike from "./ButtonLike";
+import postsApi from "../../../service/postsApi";
 
 const Feet = () => {
   const { data: session } = useSession();
-  console.log("session>>>", session);
 
-  const [posts, setPosts] = useState<IResIResponsePostsType[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [likeInProgress, setLikeInProgress] = useState<string | null>(null);
@@ -29,21 +30,53 @@ const Feet = () => {
   const [expandedComments, setExpandedComments] = useState<{
     [postId: string]: boolean;
   }>({});
-
+  //function
+  const handleShowComments = (postId: string) => {
+    setExpandedComments((prev) => ({
+      ...prev,
+      [postId]: !prev[postId],
+    }));
+  };
+  const handleEdit = (postId: string, currentContent: string) => {
+    setEditingPostId(postId);
+    setEditedContent(currentContent);
+  };
+  const handleCancelEdit = () => {
+    setEditingPostId(null);
+    setEditedContent("");
+  };
+  const handleSaveEdit = async (postId: string) => {
+    try {
+      await postsApi.updateOnePost(editedContent, postId);
+      toast.success("Post updated successfully");
+      setEditingPostId(null);
+      setEditedContent("");
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postId ? { ...post, content: editedContent } : post
+        )
+      );
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+  const handleDelete = async (postId: string) => {
+    try {
+      await postsApi.deleteOnePost(postId);
+      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+      toast.success("Post deleted successfully");
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+  //useEffect
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const url = session?.user?.id
-          ? `/api/posts?userId=${session.user.id}`
-          : `/api/posts`;
+        const response = await postsApi.getAllPosts();
 
-        const response = await fetch(url, { method: "GET" });
-        if (!response.ok) throw new Error("Failed to fetch posts");
-
-        const data = await response.json();
-        console.log("Fetched posts:", data);
-        setPosts(data.posts);
+        setPosts(response.posts);
       } catch (err) {
         console.error(err);
         setError("Could not load posts");
@@ -54,96 +87,6 @@ const Feet = () => {
 
     fetchPosts();
   }, []);
-
-  const handleLike = async (postId?: string) => {
-    if (!postId) return;
-    try {
-      if (!session?.user?.id) {
-        toast.error("กรุณาเข้าสู่ระบบก่อนกดไลค์");
-        return;
-      }
-      if (likeInProgress === postId) return;
-      setLikeInProgress(postId);
-
-      const response = await fetch(`/api/posts/${postId}/like`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: session.user.id }),
-      });
-
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to update like status");
-      }
-
-      const updatedPost = await response.json();
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
-        )
-      );
-    } catch (error: any) {
-      console.error("Error liking post:", error);
-      toast.error(error.message);
-    } finally {
-      setLikeInProgress(null);
-    }
-  };
-
-  const handleShowComments = (postId: string) => {
-    setExpandedComments((prev) => ({
-      ...prev,
-      [postId]: !prev[postId],
-    }));
-  };
-
-  const handleEdit = (postId: string, currentContent: string) => {
-    setEditingPostId(postId);
-    setEditedContent(currentContent);
-  };
-
-  const handleCancelEdit = () => {
-    setEditingPostId(null);
-    setEditedContent("");
-  };
-
-  const handleSaveEdit = async (postId: string) => {
-    try {
-      const response = await fetch(`/api/posts`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editedContent, postId }),
-      });
-      if (!response.ok) throw new Error("Failed to update post");
-      const updatedPost = await response.json();
-      setPosts((prevPosts) =>
-        prevPosts.map((post) =>
-          post.id === updatedPost.id ? updatedPost : post
-        )
-      );
-      toast.success("Post updated successfully");
-      setEditingPostId(null);
-      setEditedContent("");
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
-  const handleDelete = async (postId: string) => {
-    try {
-      const response = await fetch(`/api/posts`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ postId }),
-      });
-      if (!response.ok) throw new Error("Failed to delete post");
-      setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
-      toast.success("Post deleted successfully");
-    } catch (error: any) {
-      toast.error(error.message);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -254,22 +197,13 @@ const Feet = () => {
 
               {session && (
                 <div className="flex items-center gap-6 pt-4 border-t my-6">
-                  <button
-                    onClick={() => handleLike(post.id)}
-                    disabled={!session || likeInProgress === post.id}
-                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-                      post.isLiked
-                        ? "text-blue-600"
-                        : "text-gray-500 hover:text-blue-600"
-                    }`}
-                  >
-                    <ThumbsUp
-                      className={`h-5 w-5 ${
-                        post.isLiked ? "fill-current" : ""
-                      }`}
-                    />
-                    <span>{post.likeCount}</span>
-                  </button>
+                  <ButtonLike
+                    post={post}
+                    session={session}
+                    likeInProgress={likeInProgress}
+                    setLikeInProgress={setLikeInProgress}
+                    setPosts={setPosts}
+                  />
                   <button
                     onClick={() => handleShowComments(post.id)}
                     className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-blue-600 transition-colors"

@@ -71,6 +71,7 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
         }),
       });
       if (!res.ok) throw new Error("Failed to post comment");
+      fetchComments();
       const comment = await res.json();
       setComments((prev) => [comment, ...prev]);
       setNewComment("");
