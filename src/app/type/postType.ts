@@ -1,21 +1,33 @@
-export type IResIResponsePostsType = {
-  id: string;
-  photoUrl: string;
-  content: string;
-  createdAt: Date;
-  updatedAt: Date;
-  userId: string;
-  user: User;
-  likeCount: number;
-  isLiked: boolean;
-  comments: string;
-};
+// types/post.ts
+
 export interface User {
   id: string;
   username: string;
   email: string;
-  password: string;
   photoUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Post {
+  id: string;
+  photoUrl: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  user: Omit<User, "password">;
+  likeCount: number;
+  isLiked: boolean;
+  comments: string;
+}
+
+export interface IResIResponsePostsType {
+  posts: Post[];
+  pagination: {
+    page: number;
+    limit: number;
+    totalPosts: number;
+    totalPages: number;
+  };
 }
