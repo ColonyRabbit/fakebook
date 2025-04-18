@@ -3,11 +3,11 @@ import registerApi from "../../../service/registerApi";
 import { IRequestRegisterType } from "../../../type/registerType";
 import { z } from "zod";
 import toast from "react-hot-toast";
-// import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 const useIndexRegister = () => {
   //use Router
-  // const router = useRouter();
+  const router = useRouter();
   //local state
   const [data, setData] = useState<IRequestRegisterType>({
     username: "",
@@ -97,7 +97,7 @@ const useIndexRegister = () => {
           error instanceof Error ? error.message : "An unknown error occurred"
         );
       }
-      // router.push("/login");
+      router.push("/login");
     } catch (error) {
       console.error("เกิดข้อผิดพลาด:", error);
       setGlobalError(
