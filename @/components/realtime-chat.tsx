@@ -1,4 +1,3 @@
-// components/realtime-chat.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -26,19 +25,24 @@ export function RealtimeChat({
   session,
 }: {
   roomName: string;
-  session: Session;
+  session: Session | null;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const username = session?.user?.name ?? "Guest";
+  const userId = session?.user?.id ?? "guest";
+  const photoUrl = session?.user?.photoUrl ?? undefined;
+
   const sendMessage = async () => {
     if (input.trim() === "") return;
 
     const { error } = await supabase.from("messages").insert({
       content: input,
-      user_id: session.user.id,
-      username: session.user.name,
-      photo_url: session.user.photoUrl, // ✅ ตรงนี้แก้แล้ว
+      user_id: userId,
+      username,
+      photo_url: photoUrl,
       room: roomName,
     });
 
@@ -49,22 +53,24 @@ export function RealtimeChat({
 
     setInput("");
   };
-  // Load history
+
+  // Load message history
   useEffect(() => {
     const loadMessages = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("messages")
         .select("*")
         .eq("room", roomName)
         .order("created_at", { ascending: true });
 
       if (data) setMessages(data);
+      if (error) console.error("Fetch error:", error.message);
     };
 
     loadMessages();
   }, [sendMessage]);
 
-  // Subscribe realtime
+  // Subscribe to new messages
   useEffect(() => {
     const channel = supabase
       .channel(`room-${roomName}`)
@@ -87,7 +93,7 @@ export function RealtimeChat({
     };
   }, [roomName]);
 
-  // Auto scroll
+  // Auto scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -96,7 +102,7 @@ export function RealtimeChat({
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-2">
         {messages.map((msg) => {
-          const isOwnMessage = msg.user_id === session.user.id;
+          const isOwnMessage = msg.user_id === userId;
 
           return (
             <div
@@ -112,9 +118,9 @@ export function RealtimeChat({
                     : "bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white rounded-bl-none"
                 }`}
               >
-                {!isOwnMessage ? (
+                {!isOwnMessage && (
                   <div className="flex items-center gap-2 mb-1">
-                    {msg.photo_url && (
+                    {msg.photo_url ? (
                       <Image
                         alt={msg.username}
                         src={msg.photo_url}
@@ -122,28 +128,15 @@ export function RealtimeChat({
                         height={20}
                         className="rounded-full"
                       />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-gray-400 flex items-center justify-center text-white text-xs">
+                        {msg.username[0]?.toUpperCase()}
+                      </div>
                     )}
                     <span className="text-xs font-semibold">
                       {msg.username}
                     </span>
                   </div>
-                ) : (
-                  <>
-                    <div className="flex items-center gap-2 mb-1">
-                      {msg.photo_url && (
-                        <Image
-                          alt={msg.username}
-                          src={msg.photo_url}
-                          width={20}
-                          height={20}
-                          className="rounded-full"
-                        />
-                      )}
-                      <span className="text-xs font-semibold">
-                        {msg.username}
-                      </span>
-                    </div>
-                  </>
                 )}
                 {msg.content}
               </div>
