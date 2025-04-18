@@ -4,9 +4,8 @@ import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "../components/Theme-provider";
 import Navbar from "../components/Navbar/Navbar";
 import SessionWrapper from "../components/SessionWrapper";
-import ChatPage from "../components/PrivateChat";
-import PrivateChat from "../components/PrivateChat";
-import FloatingChatWrapper from "../components/PrivateChat";
+
+import FloatingChatWrapper from "../components/FloatingChatWrapper";
 import { Metadata } from "next";
 
 const geistSans = Geist({

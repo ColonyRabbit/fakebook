@@ -1,141 +1,174 @@
+// components/realtime-chat.tsx
 "use client";
 
-import { Send } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ChatMessage, useRealtimeChat } from "../hooks/use-realtime-chat";
-import { useChatScroll } from "../hooks/use-chat-scroll";
-import { ChatMessageItem } from "./chat-message";
-import { Input } from "./ui/input";
-import { cn } from "../../src/lib/utils";
-import { Button } from "./ui/button";
+import { useEffect, useState, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+import Image from "next/image";
+import { Session } from "next-auth";
 
-interface RealtimeChatProps {
-  roomName: string;
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
+
+type Message = {
+  id: string;
+  content: string;
+  user_id: string;
   username: string;
-  onMessage?: (messages: ChatMessage[]) => void;
-  messages?: ChatMessage[];
-}
+  photo_url?: string;
+  created_at: string;
+  room: string;
+};
 
-/**
- * Realtime chat component
- * @param roomName - The name of the room to join. Each room is a unique chat.
- * @param username - The username of the user
- * @param onMessage - The callback function to handle the messages. Useful if you want to store the messages in a database.
- * @param messages - The messages to display in the chat. Useful if you want to display messages from a database.
- * @returns The chat component
- */
-export const RealtimeChat = ({
+export function RealtimeChat({
   roomName,
-  username,
-  onMessage,
-  messages: initialMessages = [],
-}: RealtimeChatProps) => {
-  const { containerRef, scrollToBottom } = useChatScroll();
+  session,
+}: {
+  roomName: string;
+  session: Session;
+}) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const sendMessage = async () => {
+    if (input.trim() === "") return;
 
-  const {
-    messages: realtimeMessages,
-    sendMessage,
-    isConnected,
-  } = useRealtimeChat({
-    roomName,
-    username,
-  });
-  const [newMessage, setNewMessage] = useState("");
+    const { error } = await supabase.from("messages").insert({
+      content: input,
+      user_id: session.user.id,
+      username: session.user.name,
+      photo_url: session.user.photoUrl, // ✅ ตรงนี้แก้แล้ว
+      room: roomName,
+    });
 
-  // Merge realtime messages with initial messages
-  const allMessages = useMemo(() => {
-    const mergedMessages = [...initialMessages, ...realtimeMessages];
-    // Remove duplicates based on message id
-    const uniqueMessages = mergedMessages.filter(
-      (message, index, self) =>
-        index === self.findIndex((m) => m.id === message.id)
-    );
-    // Sort by creation date
-    const sortedMessages = uniqueMessages.sort((a, b) =>
-      a.createdAt.localeCompare(b.createdAt)
-    );
-
-    return sortedMessages;
-  }, [initialMessages, realtimeMessages]);
-
-  useEffect(() => {
-    if (onMessage) {
-      onMessage(allMessages);
+    if (error) {
+      console.error("Insert error:", error.message);
+      return;
     }
-  }, [allMessages, onMessage]);
 
+    setInput("");
+  };
+  // Load history
   useEffect(() => {
-    // Scroll to bottom whenever messages change
-    scrollToBottom();
-  }, [allMessages, scrollToBottom]);
+    const loadMessages = async () => {
+      const { data } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("room", roomName)
+        .order("created_at", { ascending: true });
 
-  const handleSendMessage = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newMessage.trim() || !isConnected) return;
+      if (data) setMessages(data);
+    };
 
-      sendMessage(newMessage);
-      setNewMessage("");
-    },
-    [newMessage, isConnected, sendMessage]
-  );
+    loadMessages();
+  }, [sendMessage]);
+
+  // Subscribe realtime
+  useEffect(() => {
+    const channel = supabase
+      .channel(`room-${roomName}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `room=eq.${roomName}`,
+        },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [roomName]);
+
+  // Auto scroll
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   return (
-    <div className="flex flex-col h-full w-full bg-background text-foreground antialiased">
-      {/* Messages */}
-      <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-        {allMessages.length === 0 ? (
-          <div className="text-center text-sm text-muted-foreground">
-            No messages yet. Start the conversation!
-          </div>
-        ) : null}
-        <div className="space-y-1">
-          {allMessages.map((message, index) => {
-            const prevMessage = index > 0 ? allMessages[index - 1] : null;
-            const showHeader =
-              !prevMessage || prevMessage.user.name !== message.user.name;
+    <div className="flex flex-col h-full">
+      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+        {messages.map((msg) => {
+          const isOwnMessage = msg.user_id === session.user.id;
 
-            return (
+          return (
+            <div
+              key={msg.id}
+              className={`flex ${
+                isOwnMessage ? "justify-end" : "justify-start"
+              }`}
+            >
               <div
-                key={message.id}
-                className="animate-in fade-in slide-in-from-bottom-4 duration-300"
+                className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                  isOwnMessage
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-zinc-200 dark:bg-zinc-800 text-black dark:text-white rounded-bl-none"
+                }`}
               >
-                <ChatMessageItem
-                  message={message}
-                  isOwnMessage={message.user.name === username}
-                  showHeader={showHeader}
-                />
+                {!isOwnMessage ? (
+                  <div className="flex items-center gap-2 mb-1">
+                    {msg.photo_url && (
+                      <Image
+                        alt={msg.username}
+                        src={msg.photo_url}
+                        width={20}
+                        height={20}
+                        className="rounded-full"
+                      />
+                    )}
+                    <span className="text-xs font-semibold">
+                      {msg.username}
+                    </span>
+                  </div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-2 mb-1">
+                      {msg.photo_url && (
+                        <Image
+                          alt={msg.username}
+                          src={msg.photo_url}
+                          width={20}
+                          height={20}
+                          className="rounded-full"
+                        />
+                      )}
+                      <span className="text-xs font-semibold">
+                        {msg.username}
+                      </span>
+                    </div>
+                  </>
+                )}
+                {msg.content}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
+
+        <div ref={messagesEndRef} />
       </div>
 
-      <form
-        onSubmit={handleSendMessage}
-        className="flex w-full gap-2 border-t border-border p-4"
-      >
-        <Input
-          className={cn(
-            "rounded-full bg-background text-sm transition-all duration-300",
-            isConnected && newMessage.trim() ? "w-[calc(100%-36px)]" : "w-full"
-          )}
-          type="text"
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          placeholder="Type a message..."
-          disabled={!isConnected}
+      <div className="p-4 border-t flex space-x-2">
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          className="flex-1 p-2 border rounded"
+          placeholder="พิมพ์ข้อความ..."
         />
-        {isConnected && newMessage.trim() && (
-          <Button
-            className="aspect-square rounded-full animate-in fade-in slide-in-from-right-4 duration-300"
-            type="submit"
-            disabled={!isConnected}
-          >
-            <Send className="size-4" />
-          </Button>
-        )}
-      </form>
+        <button
+          onClick={sendMessage}
+          className="bg-blue-600 text-white px-4 rounded"
+        >
+          ส่ง
+        </button>
+      </div>
     </div>
   );
-};
+}

@@ -13,7 +13,8 @@ const registerApi = (() => {
     });
 
     if (!response.ok) {
-      throw new Error("Registration failed");
+      const errorData = await response.json();
+      throw new Error(errorData.error);
     }
 
     const data = await response.json();
