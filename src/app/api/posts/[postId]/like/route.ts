@@ -56,7 +56,7 @@ export async function POST(request: Request, context: any) {
         },
         likes: {
           where: { userId: session.user.id },
-          select: { userId: true },
+          select: { userId: true, user: true },
         },
       },
     });
