@@ -3,140 +3,38 @@ import {
   Camera,
   X,
   Upload,
-  UserCircle,
   ImagePlus,
   EyeOffIcon,
   EyeIcon,
 } from "lucide-react";
 import Link from "next/link";
 
-import { useRef, useState } from "react";
-import { z } from "zod";
-import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { motion } from "framer-motion"; // ต้องติดตั้ง framer-motion
-import { RegisterType } from "../../type/registerType";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
+import useIndexRegister from "./hooks/useIndexRegister";
 const IndexRegister = () => {
-  //use Router
-  const router = useRouter();
-  //local state
-
-  const [data, setData] = useState<RegisterType>({
-    username: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-  });
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false);
-  const [errors, setErrors] = useState<Partial<RegisterType>>({});
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [existUser, setExistUser] = useState<string | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<File | null>(null);
-  const [isDragging, setIsDragging] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  //zod
-  const formSchema = z
-    .object({
-      username: z.string().min(1, { message: "กรุณากรอกชื่อผู้ใช้งาน" }),
-      email: z.string().email({ message: "รูปแบบอีเมลไม่ถูกต้อง" }),
-      password: z
-        .string()
-        .min(8, { message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร" }),
-      confirmPassword: z
-        .string()
-        .min(8, { message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร" }),
-    })
-    .refine((data) => data.password === data.confirmPassword, {
-      message: "รหัสผ่านไม่ตรงกัน",
-      path: ["confirmPassword"],
-    });
-
-  //function
-  const handleFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = () => {
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      setPreviewUrl(e.dataTransfer.files[0]);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      // ตรวจสอบข้อมูลด้วย Zod
-      const result = formSchema.safeParse(data);
-      if (!result.success) {
-        // จัดการกับข้อผิดพลาดจาก Zod
-        const fieldErrors: Partial<RegisterType> = {};
-        result.error.errors.forEach((err) => {
-          const path = err.path[0] as keyof RegisterType;
-          fieldErrors[path] = err.message;
-        });
-        setErrors(fieldErrors);
-        return;
-      }
-
-      // ล้างข้อผิดพลาด
-      setErrors({});
-      setIsLoading(true);
-      //เก็บภาพที่เลือกใน previewUrl ที่ s3
-      // สร้าง FormData object ขึ้นมา
-      const formData = new FormData();
-      formData.append("username", data.username);
-      formData.append("email", data.email);
-      formData.append("password", data.password);
-      formData.append("confirmPassword", data.confirmPassword);
-      if (previewUrl) {
-        // "profileImage" คือชื่อ field ที่ใช้ส่งไฟล์ไปยัง API Endpoint
-        formData.append("profileImage", previewUrl);
-      }
-
-      // ส่งข้อมูลผ่าน API โดยใช้ FormData (อย่าระบุ header Content-Type)
-      const response = await fetch("/api/register", {
-        method: "POST",
-        body: formData,
-      });
-
-      const responseData = await response.json();
-      console.log("Response from API:", responseData); // ตรวจสอบการตอบกลับจาก API
-      if (!response.ok) {
-        setExistUser(responseData.error);
-      } else {
-        // ลงทะเบียนสำเร็จ
-        router.push("/login?registered=true");
-      }
-    } catch (error) {
-      console.error("เกิดข้อผิดพลาด:", error);
-      setGlobalError(
-        error instanceof Error
-          ? error.message
-          : "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ"
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    data,
+    setData,
+    showPassword,
+    setShowPassword,
+    showConfirmPassword,
+    setShowConfirmPassword,
+    errors,
+    existUser,
+    previewUrl,
+    setPreviewUrl,
+    isDragging,
+    fileInputRef,
+    handleSubmit,
+    handleFileClick,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+  } = useIndexRegister();
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">

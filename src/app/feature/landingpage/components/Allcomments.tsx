@@ -8,26 +8,8 @@ import { toast } from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
 import { Textarea } from "../../../../../@/components/ui/textarea";
 import Link from "next/link";
-
-export interface User {
-  id?: string;
-  username?: string;
-  email?: string;
-  password?: string;
-  photoUrl?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface Comment {
-  id?: string;
-  content?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  userId?: string;
-  postId?: string;
-  user?: User;
-}
+import commentsApi from "../../../service/commentsApi";
+import { Comments } from "../../../type/commentsType";
 
 interface AllcommentsProps {
   postId: string;
@@ -35,7 +17,7 @@ interface AllcommentsProps {
 
 const Allcomments = ({ postId }: AllcommentsProps) => {
   const { data: session } = useSession();
-  const [comments, setComments] = useState<Comment[]>([]);
+  const [comments, setComments] = useState<Comments[]>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [newComment, setNewComment] = useState<string>("");
@@ -45,10 +27,8 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
   const fetchComments = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/posts/comments/${postId}`);
-      if (!res.ok) throw new Error("Failed to fetch comments");
-      const data = await res.json();
-      setComments(Array.isArray(data) ? data : data.comments || []);
+      const res = await commentsApi.getComments(postId);
+      setComments(res.comments);
     } catch (error) {
       console.error("Error fetching comments:", error);
       setError("Could not load comments");
@@ -61,18 +41,12 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
     e.preventDefault();
     if (!newComment.trim() || !session?.user) return;
     try {
-      const res = await fetch(`/api/posts/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          postId,
-          comment: newComment,
-          sender: session.user.id,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to post comment");
-      const comment = await res.json();
-      setComments((prev) => [comment, ...prev]);
+      await commentsApi
+        .createComment(postId, session.user.id, newComment)
+        .then((res) => {
+          toast.success("Comment added successfully");
+          fetchComments();
+        });
       setNewComment("");
     } catch (error) {
       console.error("Error posting comment:", error);
@@ -93,21 +67,11 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
   const handleSaveEdit = async (commentId?: string) => {
     if (!commentId) return;
     try {
-      const res = await fetch(`/api/posts/comments`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          commentId,
-          content: editedComment,
-        }),
+      await commentsApi.updateComment(commentId, editedComment).then((res) => {
+        toast.success("Comment updated successfully");
+        fetchComments();
       });
-      if (!res.ok) throw new Error("Failed to update comment");
-      const updatedComment = await res.json();
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === updatedComment.id ? updatedComment : comment
-        )
-      );
+
       toast.success("Comment updated successfully");
       setEditingCommentId(null);
       setEditedComment("");
@@ -120,12 +84,10 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
   const handleDelete = async (commentId?: string) => {
     if (!commentId) return;
     try {
-      const res = await fetch(`/api/posts/comments/`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ commentId }),
+      await commentsApi.deleteComment(commentId).then((res) => {
+        toast.success("Comment deleted successfully");
+        fetchComments();
       });
-      if (!res.ok) throw new Error("Failed to delete comment");
       setComments((prev) => prev.filter((comment) => comment.id !== commentId));
       toast.success("Comment deleted successfully");
     } catch (error: any) {
