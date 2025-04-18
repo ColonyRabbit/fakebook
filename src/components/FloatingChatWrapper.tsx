@@ -6,5 +6,5 @@ import FloatingChat from "./FloatingChat"; // ด้านล่างคือ 
 export default async function FloatingChatWrapper() {
   const session = await getServerSession(authOptions);
 
-  return <FloatingChat username={session?.user?.name || "Guest"} />;
+  return <FloatingChat session={session || "Guest"} />;
 }

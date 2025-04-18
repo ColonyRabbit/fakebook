@@ -2,17 +2,17 @@ import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 declare module "next-auth" {
   interface User {
-    accessToken?: string;
-    photoUrl?: string;
-    id?: string;
+    accessToken: string;
+    photoUrl: string;
+    id: string;
   }
   interface Session {
     accessToken?: string;
     user: {
-      id?: string;
-      photoUrl?: string;
-      name?: string;
-      email?: string;
+      id: string;
+      photoUrl: string;
+      name: string;
+      email: string;
     };
   }
 }

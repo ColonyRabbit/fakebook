@@ -6,7 +6,7 @@ import { MessageCircle } from "lucide-react";
 import { RealtimeChat } from "../../@/components/realtime-chat";
 import { globalStateChat } from "../app/store/globalStateChat";
 
-export default function FloatingChat({ username }: { username: string }) {
+export default function FloatingChat({ session }: { session: any }) {
   const { isChatOpen, toggleChat } = globalStateChat();
 
   return (
@@ -20,7 +20,7 @@ export default function FloatingChat({ username }: { username: string }) {
 
       {isChatOpen && (
         <div className="fixed bottom-20 right-4 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
-          <RealtimeChat roomName="my-chat-room" username={username} />
+          <RealtimeChat roomName="my-chat-room" session={session} />
         </div>
       )}
     </>

@@ -39,7 +39,7 @@ const IndexProfile = ({ id }: { id: string }) => {
       if (!session || !id) return;
       try {
         setLoading(true);
-        const userRes = await usersApi.getUser(id);
+        const userRes = await usersApi.getOneUser(id);
         setUser(userRes);
 
         const res = await fetch(`/api/follow/${userRes.id}`, {
@@ -65,7 +65,7 @@ const IndexProfile = ({ id }: { id: string }) => {
     };
 
     fetchData();
-  }, [session, id]);
+  }, [session?.user?.id, id]);
 
   const handleFollow = async (targetUserId: string) => {
     try {
