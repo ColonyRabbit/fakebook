@@ -9,7 +9,7 @@ import { Button } from "../../../../components/ui/button";
 import { Textarea } from "../../../../../@/components/ui/textarea";
 import Link from "next/link";
 import commentsApi from "../../../service/commentsApi";
-import { Comments, IResponseRCommentsType } from "../../../type/commentsType";
+import { Comments } from "../../../type/commentsType";
 
 interface AllcommentsProps {
   postId: string;

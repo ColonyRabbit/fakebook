@@ -1,75 +1,26 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
 import { ImageIcon, Smile, Camera } from "lucide-react";
-import { toast } from "react-hot-toast";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
-import { User } from "@prisma/client";
 import { Card } from "../../../../../@/components/ui/card";
-import Skeleton from "./Skeleton";
 import { Textarea } from "../../../../../@/components/ui/textarea";
 import { Button } from "../../../../components/ui/button";
 
+import usePostCreator from "../hooks/usePostCreator";
+
 export default function PostCreator() {
-  const { data: session, status } = useSession();
-  const [content, setContent] = useState<string>("");
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [user, setUser] = useState<User>();
-
-  useEffect(() => {
-    if (session?.user?.id) {
-      const fetchUser = async () => {
-        try {
-          const response = await fetch(`/api/users/${session.user.id}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-          const data = await response.json();
-          if (data) {
-            setUser(data);
-          }
-        } catch (error) {
-          console.error("Error fetching user:", error);
-        }
-      };
-      fetchUser();
-    }
-  }, [session?.user?.id]);
-
-  const handleCreatePost = async () => {
-    if (!content.trim()) return;
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/posts", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: content,
-          userId: session?.user?.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "การสร้างโพสต์ล้มเหลว");
-      }
-
-      toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
-      setContent("");
-      setIsExpanded(false);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "An unknown error occurred"
-      );
-    }
-    setIsLoading(false);
-  };
+  //call hooks
+  const {
+    content,
+    setContent,
+    isExpanded,
+    setIsExpanded,
+    isLoading,
+    fileInputRef,
+    user,
+    handleCreatePost,
+    session,
+  } = usePostCreator();
 
   if (!session) {
     return (
