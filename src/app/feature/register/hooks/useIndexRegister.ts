@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import registerApi from "../../../service/registerApi";
 import { IRequestRegisterType } from "../../../type/registerType";
 import { z } from "zod";
+import toast from "react-hot-toast";
 // import { useRouter } from "next/router";
 
 const useIndexRegister = () => {
@@ -88,8 +89,14 @@ const useIndexRegister = () => {
       if (previewUrl) {
         formData.append("profileImage", previewUrl);
       }
-      const response = await registerApi.registerUser(formData);
-      console.log("Response from API:", response);
+      try {
+        await registerApi.registerUser(formData);
+        toast.success("Registration successful!");
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "An unknown error occurred"
+        );
+      }
       // router.push("/login");
     } catch (error) {
       console.error("เกิดข้อผิดพลาด:", error);
