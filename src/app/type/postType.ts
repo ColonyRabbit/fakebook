@@ -1,5 +1,5 @@
 // types/post.ts
-
+//Res
 export interface User {
   id: string;
   username: string;
@@ -22,7 +22,7 @@ export interface Post {
   comments: string;
 }
 
-export interface IResIResponsePostsType {
+export interface IResponsePostsType {
   posts: Post[];
   pagination: {
     page: number;
@@ -30,4 +30,9 @@ export interface IResIResponsePostsType {
     totalPosts: number;
     totalPages: number;
   };
+}
+//Req
+export interface IRequestPostType {
+  content: string;
+  userId: string;
 }

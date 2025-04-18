@@ -1,22 +1,23 @@
-import { FullUser } from "../type/userType";
+// service/userApi.ts
+import { User } from "@prisma/client";
 
-//usersApi.ts
-const usersApi = (() => {
+const userApi = (() => {
   const apiBaseUrl = "/api";
-  const getUser = async (id: string): Promise<FullUser> => {
-    const response = await fetch(`${apiBaseUrl}/users/${id}`, {
+
+  const getOneUser = async (userId: string): Promise<User> => {
+    const res = await fetch(`${apiBaseUrl}/users/${userId}`, {
       method: "GET",
+      headers: { "Content-Type": "application/json" },
     });
-    if (!response.ok) {
-      throw new Error("Failed to fetch users");
+    if (!res.ok) {
+      throw new Error(`Failed to fetch user ${userId}`);
     }
-    const data = (await response.json()) as FullUser;
-    return data;
+    return (await res.json()) as User;
   };
 
   return {
-    getUser,
+    getOneUser,
   };
 })();
 
-export default usersApi;
+export default userApi;
