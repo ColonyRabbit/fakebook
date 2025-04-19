@@ -223,7 +223,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                   แก้ไขโปรไฟล์
                 </Button>
               ) : (
-                <>
+                <div className="flex justify-center md:justify-start gap-6 mt-4">
                   {" "}
                   <Button
                     onClick={() =>
@@ -240,9 +240,8 @@ const IndexProfile = ({ id }: { id: string }) => {
                   <FloatingChatWrapper
                     session={session}
                     targetUserId={user.id}
-                    targetUsername={user.username}
                   />
-                </>
+                </div>
               )}
             </div>
           </div>
