@@ -25,6 +25,7 @@ import {
 import usersApi from "../../service/usersApi";
 import clsx from "clsx";
 import { FullUser } from "../../type/userType";
+import FloatingChatWrapper from "../../../components/FloatingChatWrapper";
 
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
@@ -222,18 +223,26 @@ const IndexProfile = ({ id }: { id: string }) => {
                   แก้ไขโปรไฟล์
                 </Button>
               ) : (
-                <Button
-                  onClick={() =>
-                    isFollowing
-                      ? handleUnfollow(user.id)
-                      : handleFollow(user.id)
-                  }
-                  variant={isFollowing ? "outline" : "default"}
-                  className="w-full md:w-auto"
-                >
-                  <Users className="w-4 h-4 mr-2" />
-                  {isFollowing ? "ยกเลิกการติดตาม" : "ติดตาม"}
-                </Button>
+                <>
+                  {" "}
+                  <Button
+                    onClick={() =>
+                      isFollowing
+                        ? handleUnfollow(user.id)
+                        : handleFollow(user.id)
+                    }
+                    variant={isFollowing ? "outline" : "default"}
+                    className="w-full md:w-auto"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    {isFollowing ? "ยกเลิกการติดตาม" : "ติดตาม"}
+                  </Button>
+                  <FloatingChatWrapper
+                    session={session}
+                    targetUserId={user.id}
+                    targetUsername={user.username}
+                  />
+                </>
               )}
             </div>
           </div>

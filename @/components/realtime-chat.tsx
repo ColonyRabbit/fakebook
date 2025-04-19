@@ -29,6 +29,7 @@ export function RealtimeChat({
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [sending, setSending] = useState<Boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const username = session?.user?.name ?? "Guest";
@@ -37,20 +38,32 @@ export function RealtimeChat({
 
   const sendMessage = async () => {
     if (input.trim() === "") return;
+    setSending(true);
 
-    const { error } = await supabase.from("messages").insert({
+    const newMessage = {
       content: input,
       user_id: userId,
       username,
       photo_url: photoUrl,
       room: roomName,
-    });
+    };
+
+    const { data, error } = await supabase
+      .from("messages")
+      .insert(newMessage)
+      .select()
+      .single();
+
+    setSending(false);
 
     if (error) {
       console.error("Insert error:", error.message);
       return;
     }
 
+    if (data) {
+      setMessages((prev) => [...prev, data as Message]);
+    }
     setInput("");
   };
 
@@ -68,7 +81,7 @@ export function RealtimeChat({
     };
 
     loadMessages();
-  }, [sendMessage]);
+  }, [roomName]);
 
   // Subscribe to new messages
   useEffect(() => {
@@ -80,10 +93,12 @@ export function RealtimeChat({
           event: "INSERT",
           schema: "public",
           table: "messages",
-          filter: `room=eq.${roomName}`,
         },
         (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
+          const newMessage = payload.new as Message;
+          if (newMessage.room === roomName) {
+            setMessages((prev) => [...prev, newMessage]);
+          }
         }
       )
       .subscribe();
@@ -155,12 +170,16 @@ export function RealtimeChat({
           className="flex-1 p-2 border rounded"
           placeholder="พิมพ์ข้อความ..."
         />
-        <button
-          onClick={sendMessage}
-          className="bg-blue-600 text-white px-4 rounded"
-        >
-          ส่ง
-        </button>
+        {sending ? (
+          <p className="bg-blue-600 text-white px-4 rounded">กำลังส่ง...</p>
+        ) : (
+          <button
+            onClick={sendMessage}
+            className="bg-blue-600 text-white px-4 rounded"
+          >
+            ส่ง
+          </button>
+        )}
       </div>
     </div>
   );
