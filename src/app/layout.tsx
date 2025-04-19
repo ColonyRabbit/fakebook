@@ -46,7 +46,7 @@ export default function RootLayout({
             <Navbar />
             <Toaster position="top-center" />
             {children}
-            <FloatingChatWrapper /> {/* ลอยแบบ Facebook + แก้ error */}
+            {/* <FloatingChatWrapper /> */}
           </SessionWrapper>
         </ThemeProvider>
       </body>

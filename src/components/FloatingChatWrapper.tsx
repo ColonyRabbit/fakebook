@@ -1,10 +1,25 @@
-// components/FloatingChatWrapper.tsx ✅ เป็น Server Component
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../lib/authOptions";
-import FloatingChat from "./FloatingChat"; // ด้านล่างคือ client component
+import FloatingChat from "./FloatingChat";
 
-export default async function FloatingChatWrapper() {
-  const session = await getServerSession(authOptions);
+interface Props {
+  targetUserId: string;
+  targetUsername: string;
+  session: any;
+}
 
-  return <FloatingChat session={session || "Guest"} />;
+export default function FloatingChatWrapper({
+  targetUserId,
+  targetUsername,
+  session,
+}: Props) {
+  const currentUserId = session?.user?.id ?? "guest";
+  //sort() แล้ว join ด้วย _ → จะได้ค่าที่ “unique สำหรับคู่ผู้ใช้” เสมอ
+  const roomName = [currentUserId, targetUserId].sort().join("_");
+
+  return (
+    <FloatingChat
+      session={session}
+      roomName={roomName}
+      targetUsername={targetUsername}
+    />
+  );
 }
