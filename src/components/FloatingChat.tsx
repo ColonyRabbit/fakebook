@@ -5,24 +5,25 @@ import { useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { RealtimeChat } from "../../@/components/realtime-chat";
 import { globalStateChat } from "../app/store/globalStateChat";
+import { Button } from "../../@/components/ui/button";
 
 export default function FloatingChat({
   session,
   roomName,
-  targetUsername,
 }: {
   session: any;
   roomName: string;
-  targetUsername: string;
 }) {
   const { isChatOpen, toggleChat } = globalStateChat();
 
-  // className="fixed bottom-4 right-4 bg-blue-600 text-white p-4 rounded-full shadow-lg z-50"
   return (
     <>
-      <button onClick={toggleChat}>
-        <MessageCircle size={24} />
-      </button>
+      <Button
+        onClick={toggleChat}
+        className="bg-blue-600 text-white p-4 flex items-center gap-2 shadow-lg z-50"
+      >
+        <MessageCircle size={24} /> <p>ส่งข้อความ</p>
+      </Button>
 
       {isChatOpen && (
         <div className="fixed bottom-20 right-4 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
