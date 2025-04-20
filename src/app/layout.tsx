@@ -46,7 +46,7 @@ export default function RootLayout({
           <SessionWrapper>
             <Navbar />
             <Toaster position="top-center" />
-            <NotificationListener /> {/* ✅ ฟัง event ทุกหน้า */}
+            <NotificationListener />
             {children}
             <FloatingChatWrapper />
           </SessionWrapper>
