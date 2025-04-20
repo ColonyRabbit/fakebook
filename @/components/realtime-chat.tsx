@@ -25,9 +25,11 @@ type Message = {
 export function RealtimeChat({
   roomName,
   session,
+  targetUserId,
 }: {
   roomName: string;
   session: Session | null;
+  targetUserId: string;
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -46,6 +48,7 @@ export function RealtimeChat({
       user_id: userId,
       username,
       room: roomName,
+      target_id: targetUserId, // 👈 ต้องส่งด้วย
     };
 
     const { data, error } = await supabase
@@ -68,13 +71,6 @@ export function RealtimeChat({
     }
 
     setInput("");
-  };
-
-  const notifyNewMessage = (msg: Message) => {
-    toast(`${msg.username} ส่งข้อความมา: ${msg.content}`, {
-      duration: 4000,
-      icon: "💬",
-    });
   };
 
   // Load messages on mount
@@ -112,11 +108,6 @@ export function RealtimeChat({
               const exists = prev.some((m) => m.id === newMessage.id);
               return exists ? prev : [...prev, newMessage];
             });
-
-            // ✅ แสดง toast เฉพาะข้อความของคนอื่น
-            if (newMessage.user_id !== userId) {
-              notifyNewMessage(newMessage);
-            }
           }
         }
       )

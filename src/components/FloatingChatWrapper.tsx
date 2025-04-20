@@ -11,5 +11,11 @@ export default function FloatingChatWrapper({ targetUserId, session }: Props) {
   const roomName = [currentUserId, targetUserId].sort().join("_");
   if (!roomName || !session) return null;
 
-  return <FloatingChat session={session} roomName={roomName} />;
+  return (
+    <FloatingChat
+      session={session}
+      roomName={roomName}
+      targetUserId={targetUserId}
+    />
+  );
 }

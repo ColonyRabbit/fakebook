@@ -10,7 +10,9 @@ import { RealtimeChat } from "../../@/components/realtime-chat";
 export default function FloatingChat({
   session,
   roomName,
+  targetUserId,
 }: {
+  targetUserId: string;
   session: any;
   roomName: string;
 }) {
@@ -27,7 +29,11 @@ export default function FloatingChat({
 
       {isChatOpen && (
         <div className="fixed bottom-20 right-4 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
-          <RealtimeChat roomName={roomName} session={session} />
+          <RealtimeChat
+            targetUserId={targetUserId}
+            roomName={roomName}
+            session={session}
+          />
         </div>
       )}
     </>

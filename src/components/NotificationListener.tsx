@@ -1,4 +1,3 @@
-// components/NotificationListener.tsx
 "use client";
 
 import { useEffect } from "react";
@@ -13,11 +12,14 @@ const supabase = createClient(
 
 export default function NotificationListener() {
   const { data: session } = useSession();
-  const userId = session?.user?.id ?? "guest";
+  const currentUserId = session?.user?.id;
 
   useEffect(() => {
-    if (!userId) return;
-
+    // ✅ ต้องแน่ใจว่ามี session ก่อน
+    if (!session?.user?.id) return;
+  
+    const currentUserId = session.user.id;
+  
     const channel = supabase
       .channel("global-messages")
       .on(
@@ -29,7 +31,12 @@ export default function NotificationListener() {
         },
         (payload) => {
           const msg = payload.new;
-          if (msg.user_id !== userId) {
+  
+          // ✅ เงื่อนไขนี้จะทำงานถูกต้องเมื่อ user_id !== currentUserId
+          if (
+            msg.target_id === currentUserId &&
+            msg.user_id !== currentUserId
+          ) {
             toast(`${msg.username} ส่งข้อความมา: ${msg.content}`, {
               icon: "💬",
               duration: 4000,
@@ -38,11 +45,9 @@ export default function NotificationListener() {
         }
       )
       .subscribe();
-
+  
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
-
-  return null; // ไม่ render อะไรเลย แค่ทำหน้าที่ฟัง event
-}
+  }, [session]); // ✅ ให้ wait จน session มาครบ
+  
