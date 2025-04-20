@@ -1,5 +1,7 @@
 import { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
+
 declare module "next-auth" {
   interface User {
     accessToken: string;
@@ -34,6 +36,13 @@ export const authOptions: AuthOptions = {
         const user = await res.json();
         if (!res.ok || !user) throw new Error(user?.error || "Login failed");
         return user;
+      },
+    }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_ID,
+      clientSecret: process.env.GOOGLE_SECRET,
+      authorization: {
+        params: { prompt: "consent", access_type: "offline" },
       },
     }),
   ],
