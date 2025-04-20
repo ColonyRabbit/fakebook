@@ -17,9 +17,9 @@ export default function NotificationListener() {
   useEffect(() => {
     // ✅ ต้องแน่ใจว่ามี session ก่อน
     if (!session?.user?.id) return;
-  
+
     const currentUserId = session.user.id;
-  
+
     const channel = supabase
       .channel("global-messages")
       .on(
@@ -31,7 +31,7 @@ export default function NotificationListener() {
         },
         (payload) => {
           const msg = payload.new;
-  
+
           // ✅ เงื่อนไขนี้จะทำงานถูกต้องเมื่อ user_id !== currentUserId
           if (
             msg.target_id === currentUserId &&
@@ -45,9 +45,10 @@ export default function NotificationListener() {
         }
       )
       .subscribe();
-  
+
     return () => {
       supabase.removeChannel(channel);
     };
   }, [session]); // ✅ ให้ wait จน session มาครบ
-  
+  return null;
+}
