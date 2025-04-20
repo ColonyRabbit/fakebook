@@ -5,8 +5,9 @@ import { ThemeProvider } from "../components/Theme-provider";
 import Navbar from "../components/Navbar/Navbar";
 import SessionWrapper from "../components/SessionWrapper";
 
-import FloatingChatWrapper from "../components/FloatingChatWrapper";
 import { Metadata } from "next";
+import FloatingChatWrapper from "../components/FloatingChatWrapper";
+import NotificationListener from "../components/NotificationListener";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -45,8 +46,9 @@ export default function RootLayout({
           <SessionWrapper>
             <Navbar />
             <Toaster position="top-center" />
+            <NotificationListener /> {/* ✅ ฟัง event ทุกหน้า */}
             {children}
-            {/* <FloatingChatWrapper /> */}
+            <FloatingChatWrapper />
           </SessionWrapper>
         </ThemeProvider>
       </body>

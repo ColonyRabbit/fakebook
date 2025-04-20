@@ -3,9 +3,9 @@
 
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
-import { RealtimeChat } from "../../@/components/realtime-chat";
 import { globalStateChat } from "../app/store/globalStateChat";
 import { Button } from "../../@/components/ui/button";
+import { RealtimeChat } from "../../@/components/realtime-chat";
 
 export default function FloatingChat({
   session,
