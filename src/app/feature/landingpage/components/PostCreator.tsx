@@ -72,7 +72,7 @@ export default function PostCreator() {
               <div className="font-medium text-foreground">
                 เพิ่มเข้าในโพสต์ของคุณ
               </div>
-              <div className="flex space-x-2">
+              {/* <div className="flex space-x-2">
                 <Button
                   variant="ghost"
                   size="icon"
@@ -95,7 +95,7 @@ export default function PostCreator() {
                 >
                   <Smile className="h-5 w-5" />
                 </Button>
-              </div>
+              </div> */}
             </div>
 
             <div className="mt-4 flex justify-end">
