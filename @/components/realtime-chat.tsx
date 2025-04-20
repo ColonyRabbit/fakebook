@@ -4,6 +4,8 @@ import { useEffect, useState, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
 import { Session } from "next-auth";
+import toast from "react-hot-toast";
+import { useNotificationStore } from "../../src/app/store/Notification";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -33,8 +35,7 @@ export function RealtimeChat({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const username = session?.user?.name ?? "Guest";
-  const userId = session?.user?.id ?? "guest";
-  const photoUrl = session?.user?.photoUrl ?? undefined;
+  const userId = session?.user?.id ?? "guest"; // 👈 สำคัญ!
 
   const sendMessage = async () => {
     if (input.trim() === "") return;
@@ -44,7 +45,6 @@ export function RealtimeChat({
       content: input,
       user_id: userId,
       username,
-      photo_url: photoUrl,
       room: roomName,
     };
 
@@ -55,19 +55,29 @@ export function RealtimeChat({
       .single();
 
     setSending(false);
-
     if (error) {
-      console.error("Insert error:", error.message);
+      console.error("❌ Insert error:", error.message);
       return;
     }
 
     if (data) {
-      setMessages((prev) => [...prev, data as Message]);
+      setMessages((prev) => {
+        const exists = prev.some((m) => m.id === data.id);
+        return exists ? prev : [...prev, data];
+      });
     }
+
     setInput("");
   };
 
-  // Load message history
+  const notifyNewMessage = (msg: Message) => {
+    toast(`${msg.username} ส่งข้อความมา: ${msg.content}`, {
+      duration: 4000,
+      icon: "💬",
+    });
+  };
+
+  // Load messages on mount
   useEffect(() => {
     const loadMessages = async () => {
       const { data, error } = await supabase
@@ -96,8 +106,17 @@ export function RealtimeChat({
         },
         (payload) => {
           const newMessage = payload.new as Message;
+
           if (newMessage.room === roomName) {
-            setMessages((prev) => [...prev, newMessage]);
+            setMessages((prev) => {
+              const exists = prev.some((m) => m.id === newMessage.id);
+              return exists ? prev : [...prev, newMessage];
+            });
+
+            // ✅ แสดง toast เฉพาะข้อความของคนอื่น
+            if (newMessage.user_id !== userId) {
+              notifyNewMessage(newMessage);
+            }
           }
         }
       )
@@ -106,9 +125,9 @@ export function RealtimeChat({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [roomName]);
+  }, [roomName, userId]);
 
-  // Auto scroll to bottom
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -158,7 +177,6 @@ export function RealtimeChat({
             </div>
           );
         })}
-
         <div ref={messagesEndRef} />
       </div>
 
