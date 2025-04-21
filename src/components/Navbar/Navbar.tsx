@@ -1,17 +1,18 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useSession, signIn, signOut } from "next-auth/react";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@supabase/supabase-js";
+import Image from "next/image";
+import Link from "next/link";
+import { toast } from "sonner";
+import { Bell, LogIn, LogOut, Settings, UserPlus, Loader2 } from "lucide-react";
+
 import Logo from "./Logo";
 import Search from "./Search";
 import ThemeToggle from "../ThemeToggle";
-import { useSession, signIn, signOut } from "next-auth/react";
-import Image from "next/image";
 import { Button } from "../ui/button";
-import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { Settings, LogOut, LogIn, UserPlus, Loader2, Bell } from "lucide-react";
-import { User } from "@prisma/client";
-import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Skeleton } from "../../../@/components/ui/skeleton";
-import { createClient } from "@supabase/supabase-js";
+import { User } from "@prisma/client";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -28,35 +29,56 @@ const supabase = createClient(
 );
 
 const Navbar = () => {
+  const { data: session, status } = useSession();
+  const route = useRouter();
+  const pathName = usePathname();
+
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [messages, setMessages] = useState([]);
-  const [sennderId, setSenderId] = useState<string | null>(null);
-  const route = useRouter();
-  const pathName = usePathname();
-  const { data: session, status } = useSession();
 
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [messages, setMessages] = useState<string[]>([]);
+  const [senderId, setSenderId] = useState<string | null>(null);
+
+  // 📌 โหลด noti จาก localStorage เมื่อเปิดเว็บ
+  useEffect(() => {
+    const storedCount = localStorage.getItem("unreadNotiCount");
+    const storedMessages = localStorage.getItem("unreadNotiMessages");
+
+    if (storedCount) setUnreadCount(parseInt(storedCount));
+    if (storedMessages) setMessages(JSON.parse(storedMessages));
+  }, []);
+
+  // ✅ บันทึก noti ตอนปิดแท็บหรือสลับหน้า
+  useEffect(() => {
+    const handleUnload = () => {
+      localStorage.setItem("unreadNotiCount", unreadCount.toString());
+      localStorage.setItem("unreadNotiMessages", JSON.stringify(messages));
+    };
+
+    window.addEventListener("beforeunload", handleUnload);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") handleUnload();
+    });
+
+    return () => {
+      window.removeEventListener("beforeunload", handleUnload);
+      document.removeEventListener("visibilitychange", handleUnload);
+    };
+  }, [unreadCount, messages]);
+
+  // 📌 โหลดข้อมูล user
   useEffect(() => {
     if (session?.user?.id) {
       const fetchUser = async () => {
         setIsLoading(true);
         try {
-          const response = await fetch(`/api/users/${session.user.id}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          });
-
-          if (!response.ok) throw new Error("Failed to fetch user data");
-
-          const data = await response.json();
+          const res = await fetch(`/api/users/${session.user.id}`);
+          const data = await res.json();
           setUser(data);
-        } catch (error) {
-          console.error("Error fetching user:", error);
-          toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้ได้ กรุณาลองใหม่อีกครั้ง");
+        } catch (err) {
+          toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้");
         } finally {
           setIsLoading(false);
         }
@@ -65,6 +87,7 @@ const Navbar = () => {
     }
   }, [session?.user?.id]);
 
+  // 🔔 ตั้งค่า realtime แจ้งเตือน
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -79,18 +102,33 @@ const Navbar = () => {
         },
         (payload) => {
           const msg = payload.new;
-          setSenderId(msg.user_id);
+
           if (
             msg.target_id === session.user.id &&
             msg.user_id !== session.user.id
           ) {
-            setUnreadCount((prev) => prev + 1);
-            setMessages((prev) => [
-              ...prev,
-              "จาก" + msg.username + "ส่งข้อความ: " + msg.content + " ",
-            ]);
+            setSenderId(msg.user_id);
             toast(`${msg.username} ส่งข้อความ: ${msg.content}`, {
               icon: "💬",
+            });
+
+            // 📌 อัปเดต state และ localStorage
+            setUnreadCount((prev) => {
+              const newCount = prev + 1;
+              localStorage.setItem("unreadNotiCount", newCount.toString());
+              return newCount;
+            });
+
+            setMessages((prev) => {
+              const updated = [
+                ...prev,
+                `จาก ${msg.username} ส่งข้อความ: ${msg.content}`,
+              ];
+              localStorage.setItem(
+                "unreadNotiMessages",
+                JSON.stringify(updated)
+              );
+              return updated;
             });
           }
         }
@@ -103,23 +141,15 @@ const Navbar = () => {
   }, [session?.user?.id]);
 
   const handleSignOut = async () => {
+    setIsSigningOut(true);
     try {
-      setIsSigningOut(true);
       await signOut();
       route.push("/");
       toast.success("ออกจากระบบสำเร็จ");
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการออกจากระบบ กรุณาลองใหม่อีกครั้ง");
+    } catch {
+      toast.error("เกิดข้อผิดพลาดในการออกจากระบบ");
     } finally {
       setIsSigningOut(false);
-    }
-  };
-
-  const handleSignIn = async () => {
-    try {
-      await signIn();
-    } catch (error) {
-      toast.error("เกิดข้อผิดพลาดในการเข้าสู่ระบบ กรุณาลองใหม่อีกครั้ง");
     }
   };
 
@@ -138,6 +168,7 @@ const Navbar = () => {
           <div className="flex items-center justify-end space-x-4 max-md:justify-center">
             <ThemeToggle />
 
+            {/* 🔔 Notification */}
             {session && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -161,7 +192,12 @@ const Navbar = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => setUnreadCount(0)}
+                        onClick={() => {
+                          setUnreadCount(0);
+                          setMessages([]);
+                          localStorage.removeItem("unreadNotiCount");
+                          localStorage.removeItem("unreadNotiMessages");
+                        }}
                         className="text-xs text-blue-600 hover:text-blue-700"
                       >
                         มาร์กว่าอ่านแล้ว
@@ -171,16 +207,13 @@ const Navbar = () => {
                   <DropdownMenuSeparator />
                   {unreadCount > 0 ? (
                     <div className="max-h-64 overflow-auto">
-                      {messages.map((message, index) => (
+                      {messages.map((message, i) => (
                         <DropdownMenuItem
-                          key={index}
-                          className="p-3 cursor-default"
+                          key={i}
+                          className="p-2 cursor-default"
                         >
-                          <Link href={`/profile/${sennderId}`}>
-                            <div className="flex items-start gap-2">
-                              <div className="w-2 h-2 mt-2 rounded-full bg-blue-500" />
-                              <p className="text-sm">{message}</p>
-                            </div>
+                          <Link href={`/profile/${senderId}`}>
+                            <p className="text-sm">{message}</p>
                           </Link>
                         </DropdownMenuItem>
                       ))}
@@ -195,6 +228,7 @@ const Navbar = () => {
               </DropdownMenu>
             )}
 
+            {/* 🔐 Auth */}
             {status === "loading" ? (
               <Skeleton className="w-10 h-10 rounded-full" />
             ) : session ? (
@@ -259,8 +293,8 @@ const Navbar = () => {
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
-                  onClick={handleSignIn}
-                  className="text-white hover:bg-white/10 transition-colors"
+                  onClick={() => signIn("google")}
+                  className="text-white hover:bg-white/10"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   เข้าสู่ระบบ
@@ -268,7 +302,7 @@ const Navbar = () => {
                 <Link href="/register">
                   <Button
                     variant="ghost"
-                    className="text-white hover:bg-white/10 transition-colors"
+                    className="text-white hover:bg-white/10"
                   >
                     <UserPlus className="h-4 w-4 mr-2" />
                     สมัครสมาชิก
