@@ -1,20 +1,23 @@
-// app/api/posts/route.ts
 import { NextResponse } from "next/server";
+import { Buffer } from "buffer";
 import prisma from "../../../../lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
 // [GET] /api/posts
 export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page"));
-    const limit = parseInt(searchParams.get("limit"));
+    const page = parseInt(searchParams.get("page") || "1");
+    const limit = parseInt(searchParams.get("limit") || "10");
     const skip = (page - 1) * limit;
+
     const totalPosts = await prisma.post.count();
     const totalPages = Math.ceil(totalPosts / limit);
     const hasMore = page < totalPages;
+
     const posts = await prisma.post.findMany({
       skip,
       take: limit,
@@ -42,6 +45,7 @@ export async function GET(request: Request) {
       likeCount: post._count.likes,
       isLiked: !!post.likes?.length,
       comments: post._count.comments,
+      fileUrl: post.fileUrl,
     }));
 
     return NextResponse.json({
@@ -67,14 +71,57 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const { content, userId } = await request.json();
+    const formData = await request.formData();
+    const content = formData.get("content")?.toString() || "";
+    const userId = formData.get("userId")?.toString() || "";
+    const file = formData.get("file") as File | null;
 
+    // 🔒 Validate session & inputs
     if (!session || session.user.id !== userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    if (!content.trim()) {
+      return NextResponse.json(
+        { error: "Content is required" },
+        { status: 400 }
+      );
+    }
+
+    // ✅ Check if user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    let photoUrl = null;
+    if (file instanceof File) {
+      const fileName = `uploads/${Date.now()}-${file.name}`;
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const s3Client = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+      const params = {
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: file.type,
+      };
+      const command = new PutObjectCommand(params);
+      await s3Client.send(command);
+      photoUrl = `${process.env.AWS_S3_URL}/${fileName}`;
+    }
+
     const newPost = await prisma.post.create({
-      data: { content, userId },
+      data: {
+        content,
+        userId,
+        fileUrl: photoUrl,
+      },
     });
 
     return NextResponse.json(
@@ -94,28 +141,52 @@ export async function POST(request: Request) {
 export async function PATCH(request: Request) {
   try {
     const session = await getServerSession(authOptions);
-    const { content, postId } = await request.json();
+    const formData = await request.formData();
+
+    const content = formData.get("content")?.toString();
+    const postId = formData.get("postId")?.toString();
+    const file = formData.get("file") as File | null;
 
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (!postId || !content)
-      return NextResponse.json(
-        { error: "Missing postId or content" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing data" }, { status: 400 });
 
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
     });
     if (!existingPost)
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
-
     if (existingPost.userId !== session.user.id)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+    let fileUrl = existingPost.fileUrl;
+
+    let photoUrl = null;
+    if (file instanceof File) {
+      const fileName = `uploads/${Date.now()}-${file.name}`;
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+      const s3Client = new S3Client({
+        region: process.env.AWS_REGION,
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+      const params = {
+        Bucket: process.env.AWS_S3_BUCKET,
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: file.type,
+      };
+      const command = new PutObjectCommand(params);
+      await s3Client.send(command);
+      fileUrl = `${process.env.AWS_S3_URL}/${fileName}`;
+    }
+
     const updatedPost = await prisma.post.update({
       where: { id: postId },
-      data: { content },
+      data: { content, fileUrl },
     });
 
     return NextResponse.json({ message: "Post updated", post: updatedPost });
@@ -131,23 +202,34 @@ export async function DELETE(request: Request) {
     const session = await getServerSession(authOptions);
     const { postId } = await request.json();
 
-    if (!session)
+    if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    if (!postId)
+    }
+
+    if (!postId) {
       return NextResponse.json({ error: "Missing postId" }, { status: 400 });
+    }
 
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
     });
-    if (!existingPost)
+
+    if (!existingPost) {
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+    }
 
-    if (existingPost.userId !== session.user.id)
+    if (existingPost.userId !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-    const deletedPost = await prisma.post.delete({ where: { id: postId } });
+    const deletedPost = await prisma.post.delete({
+      where: { id: postId },
+    });
 
-    return NextResponse.json({ message: "Post deleted", post: deletedPost });
+    return NextResponse.json({
+      message: "Post deleted successfully",
+      post: deletedPost,
+    });
   } catch (error: any) {
     console.error("DELETE error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

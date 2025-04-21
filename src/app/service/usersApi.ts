@@ -1,10 +1,11 @@
 // service/userApi.ts
-import { User } from "@prisma/client";
+
+import { FullUser } from "../type/userType";
 
 const userApi = (() => {
   const apiBaseUrl = "/api";
 
-  const getOneUser = async (userId: string): Promise<User> => {
+  const getOneUser = async (userId: string): Promise<FullUser> => {
     const res = await fetch(`${apiBaseUrl}/users/${userId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
@@ -12,7 +13,7 @@ const userApi = (() => {
     if (!res.ok) {
       throw new Error(`Failed to fetch user ${userId}`);
     }
-    return (await res.json()) as User;
+    return (await res.json()) as FullUser;
   };
 
   return {

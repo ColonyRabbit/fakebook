@@ -41,14 +41,22 @@ const postsApi = (() => {
     return await res.json();
   };
   // POST: ไม่จำเป็นต้องระบุ Promise<T> หากไม่สนใจ type ที่ return
-  const createPost = async (content: string, userId: string) => {
-    const res = await fetch(`${apiBaseUrl}/posts`, {
+  const createPost = async (
+    content: string,
+    file: File | null,
+    userId: string
+  ) => {
+    const formData = new FormData();
+    formData.append("content", content);
+    formData.append("userId", userId);
+    if (file) {
+      formData.append("file", file);
+    }
+    const res = await fetch("/api/posts", {
       method: "POST",
-      body: JSON.stringify({ content, userId }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+      body: formData,
     });
+
     if (!res.ok) throw new Error("Failed to create post");
     return await res.json();
   };

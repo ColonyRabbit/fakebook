@@ -1,28 +1,42 @@
-export interface UserBasicInfo {
+// Like object ที่แนบมากับ post
+export interface Like {
+  userId: string;
+  postId: string;
+}
+
+// post._count
+export interface PostCount {
+  likes: number;
+  comments: number;
+}
+
+// User ที่แนบกับโพสต์
+export interface User {
   id: string;
   username: string;
   email: string;
   password: string;
   photoUrl: string | null;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export interface FollowerRelation {
-  followerId: string;
-  followingId: string;
-  createdAt: Date;
-  follower: UserBasicInfo;
+// Post หลัก
+export interface Post {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  fileUrl: string | null;
+  user: User;
+  _count: PostCount;
+  likes: Like[];
 }
 
-export interface FollowingRelation {
-  followerId: string;
-  followingId: string;
-  createdAt: Date;
-  following: UserBasicInfo;
-}
-
-export interface FullUser extends UserBasicInfo {
-  followers: FollowerRelation[];
-  following: FollowingRelation[];
+// User แบบเต็ม รวมโพสต์
+export interface FullUser extends User {
+  followers: User[]; // หรือแค่ array ของ userId ถ้าใช้แบบนั้น
+  following: User[];
+  posts: Post[];
 }
