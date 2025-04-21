@@ -5,11 +5,11 @@ import { IRequestPostType, IResponsePostsType } from "../type/postType";
 const postsApi = (() => {
   const apiBaseUrl = "/api";
   // GET: ควรระบุ Promise<T> ชัดเจนเพื่อให้ type ปลอดภัย
-  const getAllPosts = async (): Promise<IResponsePostsType> => {
-    const res = await fetch(`${apiBaseUrl}/posts`);
+  const getAllPosts = async (page: number, limit: number): Promise<any> => {
+    const res = await fetch(`/api/posts?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch posts");
     const data = await res.json();
-    return data as IResponsePostsType;
+    return data as any;
   };
   // DELETE: ไม่จำเป็นต้องระบุ Promise<T> อย่างละเอียด หากไม่ต้องการใช้ type ในภายหลัง
 

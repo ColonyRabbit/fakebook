@@ -9,16 +9,18 @@ export async function GET(request: Request) {
   try {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const page = parseInt(searchParams.get("page"));
+    const limit = parseInt(searchParams.get("limit"));
     const skip = (page - 1) * limit;
-
+    const totalPosts = await prisma.post.count();
+    const totalPages = Math.ceil(totalPosts / limit);
+    const hasMore = page < totalPages;
     const posts = await prisma.post.findMany({
       skip,
       take: limit,
       include: {
         user: true,
-        _count: { select: { likes: true } },
+        _count: { select: { likes: true, comments: true } },
         likes: session?.user?.id
           ? {
               where: { userId: session.user.id },
@@ -39,9 +41,8 @@ export async function GET(request: Request) {
       photoUrl: post.user.photoUrl,
       likeCount: post._count.likes,
       isLiked: !!post.likes?.length,
+      comments: post._count.comments,
     }));
-
-    const totalPosts = await prisma.post.count();
 
     return NextResponse.json({
       posts: formattedPosts,
@@ -49,7 +50,8 @@ export async function GET(request: Request) {
         page,
         limit,
         totalPosts,
-        totalPages: Math.ceil(totalPosts / limit),
+        totalPages,
+        hasMore,
       },
     });
   } catch (error) {

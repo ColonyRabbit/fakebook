@@ -32,7 +32,6 @@ export default function NotificationListener() {
         (payload) => {
           const msg = payload.new;
 
-          // ✅ เงื่อนไขนี้จะทำงานถูกต้องเมื่อ user_id !== currentUserId
           if (
             msg.target_id === currentUserId &&
             msg.user_id !== currentUserId

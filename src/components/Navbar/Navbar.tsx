@@ -121,7 +121,7 @@ const Navbar = () => {
                           alt="Profile"
                           width={48}
                           height={48}
-                          className="rounded-full object-contain w-12 h-12 border-2 border-white hover:border-opacity-75 transition-all"
+                          className="rounded-full object-fill w-12 h-12 border-2 border-white hover:border-opacity-75 transition-all"
                         />
                       )}
                     </Button>
