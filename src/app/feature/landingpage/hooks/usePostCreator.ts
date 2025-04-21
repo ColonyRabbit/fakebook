@@ -4,6 +4,7 @@ import postsApi from "../../../service/postsApi";
 import userApi from "../../../service/usersApi";
 import { useSession } from "next-auth/react";
 import { User } from "@prisma/client";
+import { FullUser } from "../../../type/userType";
 
 const usePostCreator = () => {
   const { data: session, status } = useSession();
@@ -11,7 +12,7 @@ const usePostCreator = () => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [user, setUser] = useState<User>();
+  const [user, setUser] = useState<FullUser>();
   const [image, setImage] = useState<File | null>(null);
 
   useEffect(() => {
