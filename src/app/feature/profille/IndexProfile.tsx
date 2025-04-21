@@ -24,18 +24,18 @@ import {
   TabsTrigger,
 } from "../../../../@/components/ui/tabs";
 import usersApi from "../../service/usersApi";
-import { FullUser, Post } from "../../type/userType";
+import clsx from "clsx";
+import { FullUser } from "../../type/userType";
 import FloatingChatWrapper from "../../../components/FloatingChatWrapper";
 
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [user, setUser] = useState<FullUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<FullUser | any>();
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState("posts");
-
   useEffect(() => {
     const fetchData = async () => {
       if (!session || !id) return;
@@ -76,7 +76,6 @@ const IndexProfile = ({ id }: { id: string }) => {
         credentials: "include",
       });
       const data = await res.json();
-
       if (!res.ok) {
         if (data.error === "Already following") {
           toast.error("คุณได้ติดตามผู้ใช้นี้แล้ว");
@@ -103,7 +102,6 @@ const IndexProfile = ({ id }: { id: string }) => {
         credentials: "include",
       });
       const data = await res.json();
-
       if (!res.ok) {
         throw new Error(data.error || "Failed to unfollow user");
       } else {
@@ -120,9 +118,9 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   if (!session) {
     return (
-      <Card className="max-w-md mx-auto mt-20 p-8 text-center bg-gray-50/50">
-        <UserCircle2 className="w-20 h-20 mx-auto mb-6 text-gray-400" />
-        <h2 className="text-2xl font-semibold mb-6">
+      <Card className="max-w-md mx-auto mt-20 p-6 text-center">
+        <UserCircle2 className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+        <h2 className="text-xl font-semibold mb-4">
           เข้าสู่ระบบเพื่อดูโปรไฟล์
         </h2>
         <Button onClick={() => router.push("/login")} className="w-full">
@@ -153,10 +151,10 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   if (!user) {
     return (
-      <Card className="max-w-md mx-auto mt-8 p-8 bg-gray-50/50">
+      <Card className="max-w-md mx-auto mt-8 p-6">
         <div className="text-center text-gray-600">
-          <UserCircle2 className="w-20 h-20 mx-auto mb-4 opacity-50" />
-          <p className="text-lg font-medium">ไม่พบข้อมูลผู้ใช้</p>
+          <UserCircle2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <p className="text-lg">ไม่พบข้อมูลผู้ใช้</p>
         </div>
       </Card>
     );
@@ -164,75 +162,70 @@ const IndexProfile = ({ id }: { id: string }) => {
 
   return (
     <div className="container max-w-4xl mx-auto p-4 space-y-6">
-      <Card className="p-8 bg-white/50 backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row items-center gap-8">
+      <Card className="p-6">
+        <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="flex-shrink-0">
             {user.photoUrl ? (
               <Image
                 src={user.photoUrl}
                 alt={user.username}
-                width={144}
-                height={144}
-                className="rounded-full w-36 h-36 object-cover ring-4 ring-offset-4 ring-gray-100 dark:ring-gray-800"
+                width={128}
+                height={128}
+                className="rounded-full w-32 h-32 object-cover ring-4 ring-offset-2 ring-gray-100 dark:ring-gray-800"
               />
             ) : (
-              <div className="w-36 h-36 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center ring-4 ring-offset-4 ring-gray-100">
-                <span className="text-5xl font-bold text-white">
+              <div className="w-32 h-32 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
+                <span className="text-4xl font-bold text-white">
                   {user.username[0].toUpperCase()}
                 </span>
               </div>
             )}
           </div>
 
-          <div className="flex-grow text-center md:text-left space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold mb-3">{user.username}</h1>
-              <div className="flex flex-col md:flex-row gap-4 items-center md:items-start text-gray-600">
-                <div className="flex items-center">
-                  <Mail className="w-4 h-4 mr-2" />
-                  {user.email}
-                </div>
-                <div className="flex items-center">
-                  <LinkIcon className="w-4 h-4 mr-2" />
-                  <span>
-                    ร่วมเป็นสมาชิกเมื่อ{" "}
-                    {new Date(user.createdAt).toLocaleDateString("th-TH", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
+          <div className="flex-grow text-center md:text-left">
+            <h1 className="text-2xl font-bold mb-2">{user.username}</h1>
+            <div className="flex flex-col md:flex-row gap-4 items-center md:items-start">
+              <div className="flex items-center text-muted-foreground">
+                <Mail className="w-4 h-4 mr-2" />
+                {user.email}
+              </div>
+              <div className="flex items-center text-muted-foreground">
+                <LinkIcon className="w-4 h-4 mr-2" />
+                <span>
+                  ร่วมเป็นสมาชิกเมื่อ{" "}
+                  {new Date(user.createdAt).toLocaleDateString("th-TH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
               </div>
             </div>
 
-            <div className="flex justify-center md:justify-start gap-12">
+            <div className="flex justify-center md:justify-start gap-6 mt-4">
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">
-                  {user.followers?.length || 0}
-                </p>
-                <p className="text-sm text-gray-600">ผู้ติดตาม</p>
+                <p className="text-2xl font-bold">{user.followers.length}</p>
+                <p className="text-sm text-muted-foreground">ผู้ติดตาม</p>
               </div>
               <div className="text-center">
-                <p className="text-3xl font-bold text-blue-600">
-                  {user.following?.length || 0}
-                </p>
-                <p className="text-sm text-gray-600">กำลังติดตาม</p>
+                <p className="text-2xl font-bold">{user.following.length}</p>
+                <p className="text-sm text-muted-foreground">กำลังติดตาม</p>
               </div>
             </div>
 
-            <div className="flex justify-center md:justify-start gap-4">
+            <div className="mt-6">
               {session.user.id === user.id ? (
                 <Button
                   onClick={() => router.push(`/profile/${user.id}/setting`)}
                   variant="outline"
-                  className="min-w-[140px]"
+                  className="w-full md:w-auto"
                 >
                   <Settings className="w-4 h-4 mr-2" />
                   แก้ไขโปรไฟล์
                 </Button>
               ) : (
-                <>
+                <div className="flex justify-center md:justify-start gap-6 mt-4">
+                  {" "}
                   <Button
                     onClick={() =>
                       isFollowing
@@ -240,7 +233,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                         : handleFollow(user.id)
                     }
                     variant={isFollowing ? "outline" : "default"}
-                    className="min-w-[140px]"
+                    className="w-full md:w-auto"
                   >
                     <Users className="w-4 h-4 mr-2" />
                     {isFollowing ? "ยกเลิกการติดตาม" : "ติดตาม"}
@@ -249,7 +242,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                     session={session}
                     targetUserId={user.id}
                   />
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -288,7 +281,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                 <span className="flex items-center gap-2">
                   <MessageCircle className="w-4 h-4" />
                   {user.posts?.reduce(
-                    (total: number, post: Post) =>
+                    (total: number, post: FullUser["posts"][number]) =>
                       total + (post._count.comments || 0),
                     0
                   )}
