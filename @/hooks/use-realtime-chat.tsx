@@ -52,7 +52,10 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
       if (!channel || !isConnected) return;
 
       const message: ChatMessage = {
-        id: crypto.randomUUID(),
+        id:
+          typeof crypto.randomUUID === "function"
+            ? crypto.randomUUID()
+            : Math.random().toString(36).substring(2, 15),
         content,
         user: {
           name: username,
