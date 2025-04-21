@@ -18,6 +18,14 @@ export async function GET(request: Request, context: any) {
         following: {
           include: { following: true },
         },
+        posts: {
+          include: {
+            user: true,
+            _count: { select: { likes: true, comments: true } },
+            likes: true,
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 

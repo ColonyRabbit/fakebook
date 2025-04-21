@@ -12,6 +12,7 @@ const usePostCreator = () => {
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [user, setUser] = useState<User>();
+  const [image, setImage] = useState<File | null>(null);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -33,11 +34,13 @@ const usePostCreator = () => {
     if (!content.trim()) return;
     setIsLoading(true);
     try {
-      await postsApi.createPost(content, session?.user?.id).then((res) => {
-        toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
-        setContent("");
-        setIsExpanded(false);
-      });
+      await postsApi
+        .createPost(content, image, session?.user?.id)
+        .then((res) => {
+          toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
+          setContent("");
+          setIsExpanded(false);
+        });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "An unknown error occurred"
@@ -56,6 +59,8 @@ const usePostCreator = () => {
     user,
     handleCreatePost,
     session,
+    image,
+    setImage,
   };
 };
 

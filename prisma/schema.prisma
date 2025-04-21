@@ -34,6 +34,7 @@ model Post {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes     Like[]
   comments  Comment[]
+  fileUrl   String?
 
   @@index([userId])
 }

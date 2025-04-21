@@ -19,6 +19,7 @@ CREATE TABLE "Post" (
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
     "userId" TEXT NOT NULL,
+    "fileUrl" TEXT,
 
     CONSTRAINT "Post_pkey" PRIMARY KEY ("id")
 );
