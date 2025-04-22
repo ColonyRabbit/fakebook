@@ -40,6 +40,7 @@ const Feed = () => {
     setLikeInProgress,
     fetchMorePosts,
     hasMore,
+    getYouTubeEmbedUrl,
   } = useFeed();
 
   const observerRef = useRef<HTMLDivElement | null>(null);
@@ -166,7 +167,7 @@ const Feed = () => {
                       <Button
                         variant="outline"
                         onClick={() => fileInputRef.current?.click()}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 dark:text-black hover:bg-gray-100 transition-colors"
                       >
                         <ImagePlus className="h-4 w-4" />
                         Change Image
@@ -204,9 +205,26 @@ const Feed = () => {
                   </div>
                 ) : (
                   <>
-                    <p className="text-gray-700 text-lg leading-relaxed mb-6">
-                      {post.content}
-                    </p>
+                    {post.content.includes("youtube.com") ? (
+                      <div
+                        className="relative w-full"
+                        style={{ paddingBottom: "56.25%" }}
+                      >
+                        <iframe
+                          src={getYouTubeEmbedUrl(post.content)}
+                          title="YouTube video"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute top-0 left-0 w-full h-full rounded-lg"
+                        ></iframe>
+                      </div>
+                    ) : (
+                      <p className="text-gray-700 text-lg leading-relaxed mb-6">
+                        {post.content}
+                      </p>
+                    )}
+
                     <PostCard post={post} />
                     {session?.user?.id === post.user?.id && (
                       <div className="flex gap-2 mb-4">
