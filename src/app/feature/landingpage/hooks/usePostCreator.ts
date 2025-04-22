@@ -30,7 +30,13 @@ const usePostCreator = () => {
       fetchUser();
     }
   }, [session?.user?.id]);
-
+  // ฟังก์ชันเพื่อแปลง YouTube link เป็น YouTube embed URL
+  const getYouTubeEmbedUrl = (url: string) => {
+    const match = url.match(
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|\S*?[?&]v=)|(?:youtu\.be\/))([^"&?\/\s]{11})/i
+    );
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  };
   const handleCreatePost = async () => {
     if (!content.trim()) return;
     setIsLoading(true);
@@ -62,6 +68,7 @@ const usePostCreator = () => {
     session,
     image,
     setImage,
+    getYouTubeEmbedUrl,
   };
 };
 

@@ -2,7 +2,6 @@
 
 import { ImageIcon, Smile, Camera, Loader2, X } from "lucide-react";
 import Image from "next/image";
-
 import usePostCreator from "../hooks/usePostCreator";
 import { Card } from "../../../../../@/components/ui/card";
 import { Textarea } from "../../../../../@/components/ui/textarea";
@@ -21,6 +20,7 @@ export default function PostCreator() {
     session,
     image,
     setImage,
+    getYouTubeEmbedUrl,
   } = usePostCreator();
 
   if (!session) {
@@ -32,6 +32,9 @@ export default function PostCreator() {
       </Card>
     );
   }
+
+  // ตรวจสอบว่า content เป็นลิงก์ YouTube หรือไม่
+  const youtubeEmbedUrl = getYouTubeEmbedUrl(content);
 
   return (
     <div className="flex justify-center max-w-2xl mx-auto p-4 sm:p-6 w-full">
@@ -57,6 +60,7 @@ export default function PostCreator() {
               onClick={() => setIsExpanded(true)}
             >
               <Textarea
+                disabled={youtubeEmbedUrl !== null}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="คุณกำลังคิดอะไรอยู่?"
@@ -146,6 +150,20 @@ export default function PostCreator() {
             )}
           </div>
         </div>
+
+        {/* Check if content is a YouTube URL, if so, render YouTube video */}
+        {youtubeEmbedUrl && (
+          <div className="mt-6">
+            <iframe
+              src={youtubeEmbedUrl}
+              title="YouTube Video"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="w-full h-60 rounded-lg"
+            ></iframe>
+          </div>
+        )}
 
         {!isExpanded && (
           <div className="grid grid-cols-3 gap-1 mt-4 pt-4 border-t dark:border-gray-700">
