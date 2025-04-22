@@ -27,7 +27,7 @@ model User {
 
 model Post {
   id        String    @id @default(cuid())
-  content   String
+  content   String?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   userId    String

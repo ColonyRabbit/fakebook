@@ -23,6 +23,22 @@ export default function PostCreator() {
     getYouTubeEmbedUrl,
   } = usePostCreator();
 
+  const handlePaste = (event: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const clipboardItems = event.clipboardData.items;
+
+    // ตรวจสอบว่า clipboard มีรูปภาพหรือไม่
+    for (let i = 0; i < clipboardItems.length; i++) {
+      const item = clipboardItems[i];
+      if (item.type.indexOf("image") !== -1) {
+        // ถ้าเป็นรูปภาพ
+        const file = item.getAsFile();
+        if (file) {
+          setImage(file); // ตั้งค่า state image
+        }
+        return;
+      }
+    }
+  };
   if (!session) {
     return (
       <Card className="p-6 text-center bg-gray-50/50 dark:bg-gray-900/50 border-dashed">
@@ -60,9 +76,10 @@ export default function PostCreator() {
               onClick={() => setIsExpanded(true)}
             >
               <Textarea
-                disabled={youtubeEmbedUrl !== null}
+                // disabled={image !== null} // ถ้ามีการเพิ่มรูปภาพแล้ว ให้ปิดการแก้ไขข้อความ
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
+                onPaste={handlePaste} // เพิ่ม handler สำหรับ paste
                 placeholder="คุณกำลังคิดอะไรอยู่?"
                 className={`min-h-[${
                   isExpanded ? "120px" : "60px"
@@ -133,7 +150,7 @@ export default function PostCreator() {
                 <div className="mt-4 flex justify-end">
                   <Button
                     onClick={handleCreatePost}
-                    disabled={!content.trim() || isLoading}
+                    disabled={isLoading}
                     className="min-w-[120px] bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-300 dark:disabled:bg-gray-700"
                   >
                     {isLoading ? (
