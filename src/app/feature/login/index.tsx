@@ -7,8 +7,8 @@ import Image from "next/image";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { FaFacebook } from "react-icons/fa";
-import { toast } from "sonner";
 import { signIn } from "next-auth/react";
+import toast from "react-hot-toast";
 
 export default function IndexLogin() {
   const router = useRouter();
@@ -79,7 +79,7 @@ export default function IndexLogin() {
         password: formData.password,
       });
 
-      if (result?.error) {
+      if (!result.ok) {
         toast.error("อีเมลหรือรหัสผ่านไม่ถูกต้อง");
       } else {
         toast.success("เข้าสู่ระบบสำเร็จ");
