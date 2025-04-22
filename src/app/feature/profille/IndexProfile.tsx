@@ -254,7 +254,7 @@ const IndexProfile = ({ id }: { id: string }) => {
         className="w-full"
         onValueChange={setActiveTab}
       >
-        <TabsList className="w-full justify-start bg-white/50 backdrop-blur-sm">
+        <TabsList className="w-full justify-start dark:bg-gray-800/50 bg-white/50 backdrop-blur-sm">
           <TabsTrigger value="posts" className="flex items-center gap-2">
             <Activity className="w-4 h-4" />
             โพสต์
@@ -269,8 +269,8 @@ const IndexProfile = ({ id }: { id: string }) => {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="posts" className="mt-6">
-          <Card className="p-8 bg-white/50 backdrop-blur-sm">
+        <TabsContent value="posts" className="mt-6 dark:bg-gray-800/50">
+          <Card className="p-8 bg-white/50 backdrop-blur-sm dark:bg-gray-800/50">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-2xl font-semibold">โพสต์ล่าสุด</h3>
               <div className="flex gap-4 text-gray-600">
