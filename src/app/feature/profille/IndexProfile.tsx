@@ -298,8 +298,8 @@ const IndexProfile = ({ id }: { id: string }) => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="about" className="mt-6">
-          <Card className="p-8 bg-white/50 backdrop-blur-sm">
+        <TabsContent value="about" className="mt-6 ">
+          <Card className="p-8 bg-white/50 backdrop-blur-sm dark:bg-gray-800/50">
             <h3 className="text-2xl font-semibold mb-6">ข้อมูลผู้ใช้</h3>
             <div className="space-y-6">
               <div>
@@ -311,7 +311,7 @@ const IndexProfile = ({ id }: { id: string }) => {
         </TabsContent>
 
         <TabsContent value="followers" className="mt-6">
-          <Card className="p-8 bg-white/50 backdrop-blur-sm">
+          <Card className="p-8 bg-white/50 backdrop-blur-sm dark:bg-gray-800/50">
             <h3 className="text-2xl font-semibold mb-6">ผู้ติดตาม</h3>
             {user.followers?.length > 0 ? (
               <div className="grid gap-6">
