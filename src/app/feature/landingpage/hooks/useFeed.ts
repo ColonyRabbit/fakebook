@@ -73,7 +73,15 @@ const useFeed = () => {
     setEditingPostId(postId);
     setEditedContent(currentContent);
   };
-
+  const getYouTubeEmbedUrl = (url: string) => {
+    try {
+      const u = new URL(url);
+      const videoId = u.searchParams.get("v");
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : "";
+    } catch {
+      return "";
+    }
+  };
   const handleCancelEdit = () => {
     setEditingPostId(null);
     setEditedContent("");
@@ -160,6 +168,7 @@ const useFeed = () => {
     setLikeInProgress,
     fetchMorePosts,
     hasMore,
+    getYouTubeEmbedUrl,
   };
 };
 
