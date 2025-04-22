@@ -331,7 +331,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                     ) : (
                       <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
                         <span className="text-lg font-bold text-white">
-                          {relation.username.charAt(0).toUpperCase()}
+                          {relation.username}
                         </span>
                       </div>
                     )}
