@@ -42,9 +42,9 @@ const postsApi = (() => {
   };
   // POST: ไม่จำเป็นต้องระบุ Promise<T> หากไม่สนใจ type ที่ return
   const createPost = async (
-    content: string,
-    file: File | null,
-    userId: string
+    content?: string,
+    file?: File | null,
+    userId?: string
   ) => {
     const formData = new FormData();
     formData.append("content", content);

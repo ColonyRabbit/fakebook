@@ -24,14 +24,14 @@ import {
   TabsTrigger,
 } from "../../../../@/components/ui/tabs";
 import usersApi from "../../service/usersApi";
-import clsx from "clsx";
 import { FullUser } from "../../type/userType";
 import FloatingChatWrapper from "../../../components/FloatingChatWrapper";
+import Link from "next/link";
 
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
   const router = useRouter();
-  const [user, setUser] = useState<FullUser | any>();
+  const [user, setUser] = useState<FullUser>();
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isFollowing, setIsFollowing] = useState<boolean>(false);
@@ -42,6 +42,8 @@ const IndexProfile = ({ id }: { id: string }) => {
       try {
         setLoading(true);
         const userRes = await usersApi.getOneUser(id);
+        console.log("user", userRes);
+
         setUser(userRes);
 
         const res = await fetch(`/api/follow/${userRes.id}`, {
@@ -315,37 +317,46 @@ const IndexProfile = ({ id }: { id: string }) => {
             <h3 className="text-2xl font-semibold mb-6">ผู้ติดตาม</h3>
             {user.followers?.length > 0 ? (
               <div className="grid gap-6">
-                {user.followers.map((relation) => (
-                  <div
-                    key={relation.id}
-                    className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    {relation.photoUrl ? (
-                      <Image
-                        src={relation.photoUrl}
-                        alt={relation.username}
-                        width={48}
-                        height={48}
-                        className="rounded-full ring-2 ring-offset-2 ring-gray-100"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center">
-                        <span className="text-lg font-bold text-white">
-                          {relation.username}
-                        </span>
+                {user.followers.map((relation, index) => {
+                  const follower = relation.follower;
+                  return (
+                    <Link key={index} href={`/profile/${follower.id}`}>
+                      <div
+                        key={index}
+                        className="flex items-center gap-4 p-4 rounded-lg hover:bg-gray-50 transition-colors dark:hover:bg-gray-700"
+                      >
+                        {follower?.photoUrl ? (
+                          <Image
+                            src={follower.photoUrl}
+                            alt={follower.username || "User Avatar"}
+                            width={48}
+                            height={48}
+                            className="rounded-full ring-2 ring-offset-2 ring-gray-100 dark:ring-gray-700 dark:ring-offset-gray-800 object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center ring-2 ring-offset-2 ring-gray-100 dark:ring-gray-700 dark:ring-offset-gray-800">
+                            <span className="text-lg font-bold text-white">
+                              {follower?.username?.charAt(0)?.toUpperCase() ||
+                                "?"}
+                            </span>
+                          </div>
+                        )}
+
+                        <div>
+                          <p className="font-semibold text-lg text-gray-900 dark:text-gray-100">
+                            {follower.username || "ผู้ใช้ไม่มีชื่อ"}
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {follower.email || "ไม่มีอีเมล"}
+                          </p>
+                        </div>
                       </div>
-                    )}
-                    <div>
-                      <p className="font-semibold text-lg">
-                        {relation.username}
-                      </p>
-                      <p className="text-sm text-gray-500">{relation.email}</p>
-                    </div>
-                  </div>
-                ))}
+                    </Link>
+                  );
+                })}
               </div>
             ) : (
-              <div className="text-center py-12 text-gray-500">
+              <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p className="text-lg">ยังไม่มีผู้ติดตามในขณะนี้</p>
               </div>

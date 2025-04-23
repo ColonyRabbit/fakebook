@@ -241,14 +241,18 @@ const Navbar = () => {
                   >
                     {isLoading ? (
                       <Loader2 className="h-5 w-5 animate-spin text-white" />
-                    ) : (
+                    ) : user?.photoUrl ? (
                       <Image
-                        src={user?.photoUrl || "/default-avatar.jpg"}
+                        src={user.photoUrl}
                         alt="โปรไฟล์"
                         width={40}
                         height={40}
                         className="rounded-full w-10 h-10 object-contain"
                       />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                        {user?.username?.charAt(0).toUpperCase() || "?"}
+                      </div>
                     )}
                   </Button>
                 </DropdownMenuTrigger>

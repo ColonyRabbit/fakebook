@@ -33,10 +33,23 @@ export interface Post {
   _count: PostCount;
   likes: Like[];
 }
+export interface FollowerRelation {
+  followerId: string;
+  followingId: string;
+  createdAt: string;
+  follower: User;
+}
+
+export interface FollowingRelation {
+  followerId: string;
+  followingId: string;
+  createdAt: string;
+  following: User;
+}
 
 // User แบบเต็ม รวมโพสต์
 export interface FullUser extends User {
-  followers: User[]; // หรือแค่ array ของ userId ถ้าใช้แบบนั้น
-  following: User[];
+  followers: FollowerRelation[];
+  following: FollowingRelation[];
   posts: Post[];
 }

@@ -38,16 +38,13 @@ const usePostCreator = () => {
     return match ? `https://www.youtube.com/embed/${match[1]}` : null;
   };
   const handleCreatePost = async () => {
-    if (!content.trim()) return;
     setIsLoading(true);
     try {
-      await postsApi
-        .createPost(content, image, session?.user?.id)
-        .then((res) => {
-          toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
-          setContent("");
-          setIsExpanded(false);
-        });
+      await postsApi.createPost(content, image, session?.user?.id).then(() => {
+        toast.success("โพสต์ของคุณถูกสร้างเรียบร้อยแล้ว");
+        setContent("");
+        setIsExpanded(false);
+      });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "An unknown error occurred"

@@ -65,7 +65,11 @@ const IndexRegister = () => {
                     <Image
                       width={160}
                       height={160}
-                      src={URL.createObjectURL(previewUrl)}
+                      src={
+                        previewUrl
+                          ? URL.createObjectURL(previewUrl)
+                          : "/image/freephoto.jpg"
+                      }
                       alt="Profile preview"
                       className="w-full h-full object-cover"
                     />

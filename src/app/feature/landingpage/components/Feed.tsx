@@ -19,6 +19,23 @@ import ButtonLike from "./ButtonLike";
 import useFeed from "../hooks/useFeed";
 import { Card } from "../../../../../@/components/ui/card";
 
+// ✅ helper functions
+function extractYouTubeEmbedUrl(text: string): string | null {
+  const match = text.match(
+    /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/i
+  );
+  return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+}
+
+function extractTextWithoutYouTubeUrl(text: string): string {
+  return text
+    .replace(
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[^\s]+/i,
+      ""
+    )
+    .trim();
+}
+
 const Feed = () => {
   const {
     posts,
@@ -43,7 +60,6 @@ const Feed = () => {
     setLikeInProgress,
     fetchMorePosts,
     hasMore,
-    getYouTubeEmbedUrl,
   } = useFeed();
 
   const observerRef = useRef<HTMLDivElement | null>(null);
@@ -96,6 +112,9 @@ const Feed = () => {
 
         {posts?.map((post, index) => {
           const isLast = index === posts.length - 1;
+
+          const embedUrl = extractYouTubeEmbedUrl(post.content);
+          const cleanText = extractTextWithoutYouTubeUrl(post.content);
 
           return (
             <Card
@@ -212,24 +231,26 @@ const Feed = () => {
                   </div>
                 ) : (
                   <>
-                    {post.content.includes("youtube.com") ? (
+                    {/* ✅ แสดงข้อความ + youtube embed ถ้ามี */}
+                    {cleanText && (
+                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4">
+                        {cleanText}
+                      </p>
+                    )}
+                    {embedUrl && (
                       <div
-                        className="relative w-full"
+                        className="relative w-full mb-6"
                         style={{ paddingBottom: "56.25%" }}
                       >
                         <iframe
-                          src={getYouTubeEmbedUrl(post.content)}
+                          src={embedUrl}
                           title="YouTube video"
                           frameBorder="0"
                           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                           allowFullScreen
                           className="absolute top-0 left-0 w-full h-full rounded-lg"
-                        ></iframe>
+                        />
                       </div>
-                    ) : (
-                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-6">
-                        {post.content}
-                      </p>
                     )}
 
                     <PostCard post={post} />
@@ -298,6 +319,7 @@ const Feed = () => {
 
 export default Feed;
 
+// ⬇️ PostCard component remains the same
 export function PostCard({ post }) {
   const [showImageModal, setShowImageModal] = useState(false);
 
