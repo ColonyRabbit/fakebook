@@ -1,8 +1,8 @@
 import FloatingChat from "./FloatingChat";
 
 interface Props {
-  targetUserId: string;
-  session: any; // ปรับตามจริงเป็น `Session` ถ้ามี type
+  targetUserId?: string;
+  session?: any; // ปรับตามจริงเป็น `Session` ถ้ามี type
 }
 
 export default function FloatingChatWrapper({ targetUserId, session }: Props) {

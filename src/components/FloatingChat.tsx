@@ -31,15 +31,13 @@ export default function FloatingChat({
         </Button>
       )}
 
-      {isChatOpen && (
-        <div className="fixed bottom-0 right-0 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
-          <RealtimeChat
-            targetUserId={targetUserId}
-            roomName={roomName}
-            session={session}
-          />
-        </div>
-      )}
+      <div className="fixed bottom-0 right-0 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
+        <RealtimeChat
+          targetUserId={targetUserId}
+          roomName={roomName}
+          session={session}
+        />
+      </div>
     </>
   );
 }

@@ -40,7 +40,7 @@ export default function RootLayout({
             <Toaster position="top-center" />
             <NotificationListener />
             {children}
-            {/* <FloatingChatWrapper /> */}
+            <FloatingChatWrapper />
           </SessionWrapper>
         </ThemeProvider>
       </body>
