@@ -79,7 +79,6 @@ export default function PostCreator() {
 
   const youtubeEmbedUrl = extractYouTubeEmbedUrl(content);
   const cleanText = extractTextWithoutYouTubeUrl(content);
-
   return (
     <div className="flex justify-center max-w-2xl mx-auto p-4 sm:p-6 w-full">
       <Card className="p-4 mb-6 max-w-2xl mx-auto sm:p-6 w-full bg-white dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200 dark:border-gray-700">

@@ -1,15 +1,15 @@
 import FloatingChat from "./FloatingChat";
 
 interface Props {
-  targetUserId?: string;
-  session?: any;
+  targetUserId: string;
+  session: any; // ปรับตามจริงเป็น `Session` ถ้ามี type
 }
 
 export default function FloatingChatWrapper({ targetUserId, session }: Props) {
-  const currentUserId = session?.user?.id ?? "guest";
-  //sort() แล้ว join ด้วย _ → จะได้ค่าที่ “unique สำหรับคู่ผู้ใช้” เสมอ
+  if (!session?.user?.id || !targetUserId) return null;
+
+  const currentUserId = session.user.id;
   const roomName = [currentUserId, targetUserId].sort().join("_");
-  if (!roomName || !session) return null;
 
   return (
     <FloatingChat

@@ -121,7 +121,7 @@ const Allcomments = ({ postId }: AllcommentsProps) => {
   const hasComments = Array.isArray(comments) && comments.length > 0;
 
   return (
-    <div className="space-y-6">
+    <div className="py-5">
       {session?.user && (
         <form onSubmit={handleSubmitComment} className="space-y-3">
           <Textarea
