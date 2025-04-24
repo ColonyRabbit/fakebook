@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import userApi from "../app/service/usersApi";
 import FloatingChatWrapper from "./FloatingChatWrapper";
+import Link from "next/link";
 
 const SideBarUserList: React.FC = () => {
   const { data: session } = useSession();
@@ -26,10 +27,13 @@ const SideBarUserList: React.FC = () => {
 
       try {
         const userData = await userApi.getOneUser(session.user.id);
+        const followings = userData.following?.map(
+          (relation: any) => relation.following
+        );
         const followers = userData.followers?.map(
           (relation: any) => relation.follower
         );
-        setFollowerList(followers || []);
+        setFollowerList([...(followings || [])]);
       } catch (error) {
         console.error("Error fetching followers:", error);
       } finally {
@@ -44,7 +48,7 @@ const SideBarUserList: React.FC = () => {
     <>
       <nav className="w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-3 px-4">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
-          ผู้ติดตามของคุณ
+          คนที่คุณติดตาม
         </h2>
         <ul className="space-y-2 max-h-[400px] overflow-y-auto">
           {loading ? (
@@ -87,8 +91,6 @@ const SideBarUserList: React.FC = () => {
           )}
         </ul>
       </nav>
-
-      {/* Floating Chat Windows */}
       {openChatUserIds.map((userId) => {
         const user = followerList.find((u) => u.id === userId);
         return (
