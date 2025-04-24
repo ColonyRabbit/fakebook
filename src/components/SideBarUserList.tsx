@@ -46,7 +46,10 @@ const SideBarUserList: React.FC = () => {
 
   return (
     <>
-      <nav className="w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-3 px-4">
+      <nav
+        className="w-full border-b drop-shadow-black
+       border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-8 px-4"
+      >
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
           คนที่คุณติดตาม
         </h2>
