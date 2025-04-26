@@ -1,16 +1,18 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+// ต้องสร้าง supabase client แบบ server-side
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// ⬇️ แก้ type context ให้ถูกต้อง
 export async function GET(
   req: NextRequest,
-  context: { params: { userId: string } }
+  { params }: { params: { userId: string } }
 ) {
-  const userId = context.params.userId;
+  const { userId } = params;
 
   const { data, error } = await supabase
     .from("fcm_tokens")
@@ -21,14 +23,8 @@ export async function GET(
     .maybeSingle();
 
   if (error || !data) {
-    return new Response(JSON.stringify({ token: null }), {
-      status: 404,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ token: null }, { status: 404 });
   }
 
-  return new Response(JSON.stringify({ token: data.token }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return NextResponse.json({ token: data.token }, { status: 200 });
 }
