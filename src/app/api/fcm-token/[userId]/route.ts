@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { userId: string } }
 ) {
   const { userId } = params;
