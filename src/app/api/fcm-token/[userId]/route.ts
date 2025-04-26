@@ -6,12 +6,11 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// ต้องแบบนี้! { params }: { params: { userId: string } }
 export async function GET(
-  request: NextRequest,
+  req: NextRequest,
   context: { params: { userId: string } }
 ) {
-  const { userId } = context.params;
+  const userId = context.params.userId;
 
   const { data, error } = await supabase
     .from("fcm_tokens")
@@ -19,7 +18,7 @@ export async function GET(
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
     return new Response(JSON.stringify({ token: null }), {
