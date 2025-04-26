@@ -8,6 +8,7 @@ import SessionWrapper from "../components/SessionWrapper";
 import { Metadata } from "next";
 import FloatingChatWrapper from "../components/FloatingChatWrapper";
 import NotificationListener from "../components/NotificationListener";
+import ServiceWorkerRegistrar from "../components/ServiceWorkerRegistrar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({
           <SessionWrapper>
             <Navbar />
             <Toaster position="top-center" />
+            <ServiceWorkerRegistrar />
             <NotificationListener />
             {children}
             <FloatingChatWrapper />

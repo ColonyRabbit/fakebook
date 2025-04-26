@@ -41,6 +41,7 @@ export function RealtimeChat({
 
   const sendMessage = async () => {
     if (input.trim() === "") return;
+
     setSending(true);
 
     const newMessage = {
@@ -48,7 +49,7 @@ export function RealtimeChat({
       user_id: userId,
       username,
       room: roomName,
-      target_id: targetUserId, // 👈 ต้องส่งด้วย
+      target_id: targetUserId,
     };
 
     const { data, error } = await supabase
@@ -68,6 +69,28 @@ export function RealtimeChat({
         const exists = prev.some((m) => m.id === data.id);
         return exists ? prev : [...prev, data];
       });
+
+      // 🎯 เรียก Push Notification API
+      try {
+        const res = await fetch(`/api/fcm-token/${targetUserId}`);
+        const { token: targetFcmToken } = await res.json();
+
+        if (targetFcmToken) {
+          await fetch("/api/push/send", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              targetFcmToken,
+              title: `ข้อความใหม่จาก ${username}`,
+              body: input,
+            }),
+          });
+        }
+      } catch (err) {
+        console.warn("⚠️ ส่ง Push ไม่สำเร็จ:", err);
+      }
     }
 
     setInput("");

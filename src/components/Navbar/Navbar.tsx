@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useSession, signIn, signOut } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
 import Image from "next/image";
@@ -28,10 +28,14 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// 👇 ชื่อ LocalStorage ที่ใช้ร่วมกันทุกที่
+const STORAGE_COUNT_KEY = "unreadNotiCount";
+const STORAGE_MESSAGES_KEY = "unreadNotiMessages";
+
 const Navbar = () => {
   const { data: session, status } = useSession();
-  const route = useRouter();
-  const pathName = usePathname();
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -41,53 +45,53 @@ const Navbar = () => {
   const [messages, setMessages] = useState<string[]>([]);
   const [senderId, setSenderId] = useState<string | null>(null);
 
-  // 📌 โหลด noti จาก localStorage เมื่อเปิดเว็บ
+  // 📦 โหลดข้อมูลจาก LocalStorage
   useEffect(() => {
-    const storedCount = localStorage.getItem("unreadNotiCount");
-    const storedMessages = localStorage.getItem("unreadNotiMessages");
+    const storedCount = localStorage.getItem(STORAGE_COUNT_KEY);
+    const storedMessages = localStorage.getItem(STORAGE_MESSAGES_KEY);
 
     if (storedCount) setUnreadCount(parseInt(storedCount));
     if (storedMessages) setMessages(JSON.parse(storedMessages));
   }, []);
 
-  // ✅ บันทึก noti ตอนปิดแท็บหรือสลับหน้า
+  // 💾 บันทึกข้อมูลลง LocalStorage
   useEffect(() => {
-    const handleUnload = () => {
-      localStorage.setItem("unreadNotiCount", unreadCount.toString());
-      localStorage.setItem("unreadNotiMessages", JSON.stringify(messages));
+    const saveToStorage = () => {
+      localStorage.setItem(STORAGE_COUNT_KEY, unreadCount.toString());
+      localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(messages));
     };
 
-    window.addEventListener("beforeunload", handleUnload);
+    window.addEventListener("beforeunload", saveToStorage);
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") handleUnload();
+      if (document.visibilityState === "hidden") saveToStorage();
     });
 
     return () => {
-      window.removeEventListener("beforeunload", handleUnload);
-      document.removeEventListener("visibilitychange", handleUnload);
+      window.removeEventListener("beforeunload", saveToStorage);
+      document.removeEventListener("visibilitychange", saveToStorage);
     };
   }, [unreadCount, messages]);
 
-  // 📌 โหลดข้อมูล user
+  // 🧑‍💻 โหลดข้อมูล User
   useEffect(() => {
-    if (session?.user?.id) {
-      const fetchUser = async () => {
-        setIsLoading(true);
-        try {
-          const res = await fetch(`/api/users/${session.user.id}`);
-          const data = await res.json();
-          setUser(data);
-        } catch (err) {
-          toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้");
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      fetchUser();
-    }
+    if (!session?.user?.id) return;
+
+    const fetchUser = async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(`/api/users/${session.user.id}`);
+        const data = await res.json();
+        setUser(data);
+      } catch (err) {
+        toast.error("ไม่สามารถโหลดข้อมูลผู้ใช้");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchUser();
   }, [session?.user?.id]);
 
-  // 🔔 ตั้งค่า realtime แจ้งเตือน
+  // 🔔 Supabase Realtime Listener
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -95,11 +99,7 @@ const Navbar = () => {
       .channel("global-messages")
       .on(
         "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
+        { event: "INSERT", schema: "public", table: "messages" },
         (payload) => {
           const msg = payload.new;
 
@@ -108,28 +108,14 @@ const Navbar = () => {
             msg.user_id !== session.user.id
           ) {
             setSenderId(msg.user_id);
-            toast(`${msg.username} ส่งข้อความ: ${msg.content}`, {
-              icon: "💬",
-            });
 
-            // 📌 อัปเดต state และ localStorage
-            setUnreadCount((prev) => {
-              const newCount = prev + 1;
-              localStorage.setItem("unreadNotiCount", newCount.toString());
-              return newCount;
-            });
+            toast(`${msg.username} ส่งข้อความ: ${msg.content}`, { icon: "💬" });
 
-            setMessages((prev) => {
-              const updated = [
-                ...prev,
-                `จาก ${msg.username} ส่งข้อความ: ${msg.content}`,
-              ];
-              localStorage.setItem(
-                "unreadNotiMessages",
-                JSON.stringify(updated)
-              );
-              return updated;
-            });
+            setUnreadCount((prev) => prev + 1);
+            setMessages((prev) => [
+              ...prev,
+              `จาก ${msg.username} ส่งข้อความ: ${msg.content}`,
+            ]);
           }
         }
       )
@@ -140,17 +126,26 @@ const Navbar = () => {
     };
   }, [session?.user?.id]);
 
+  // 🚪 ออกจากระบบ
   const handleSignOut = async () => {
     setIsSigningOut(true);
     try {
       await signOut();
-      route.push("/");
+      router.push("/");
       toast.success("ออกจากระบบสำเร็จ");
     } catch {
       toast.error("เกิดข้อผิดพลาดในการออกจากระบบ");
     } finally {
       setIsSigningOut(false);
     }
+  };
+
+  // 🔘 Clear Notifications
+  const clearNotifications = () => {
+    setUnreadCount(0);
+    setMessages([]);
+    localStorage.removeItem(STORAGE_COUNT_KEY);
+    localStorage.removeItem(STORAGE_MESSAGES_KEY);
   };
 
   return (
@@ -168,14 +163,12 @@ const Navbar = () => {
           <div className="flex items-center justify-end space-x-4 max-md:justify-center">
             <ThemeToggle />
 
-            {/* 🔔 Notification */}
             {session && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="relative p-2 hover:bg-white/10 transition-colors"
-                    aria-label="การแจ้งเตือน"
+                    className="relative p-2 hover:bg-white/10"
                   >
                     <Bell className="w-6 h-6 text-white" />
                     {unreadCount > 0 && (
@@ -185,6 +178,7 @@ const Navbar = () => {
                     )}
                   </Button>
                 </DropdownMenuTrigger>
+
                 <DropdownMenuContent align="end" className="w-72 p-2">
                   <div className="flex items-center justify-between mb-2 px-2">
                     <span className="font-semibold">การแจ้งเตือน</span>
@@ -192,12 +186,7 @@ const Navbar = () => {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => {
-                          setUnreadCount(0);
-                          setMessages([]);
-                          localStorage.removeItem("unreadNotiCount");
-                          localStorage.removeItem("unreadNotiMessages");
-                        }}
+                        onClick={clearNotifications}
                         className="text-xs text-blue-600 hover:text-blue-700"
                       >
                         มาร์กว่าอ่านแล้ว
@@ -205,11 +194,11 @@ const Navbar = () => {
                     )}
                   </div>
                   <DropdownMenuSeparator />
-                  {unreadCount > 0 ? (
+                  {messages.length > 0 ? (
                     <div className="max-h-64 overflow-auto">
-                      {messages.map((message, i) => (
+                      {messages.map((message, idx) => (
                         <DropdownMenuItem
-                          key={i}
+                          key={idx}
                           className="p-2 cursor-default"
                         >
                           <Link href={`/profile/${senderId}`}>
@@ -228,7 +217,6 @@ const Navbar = () => {
               </DropdownMenu>
             )}
 
-            {/* 🔐 Auth */}
             {status === "loading" ? (
               <Skeleton className="w-10 h-10 rounded-full" />
             ) : session ? (
@@ -247,7 +235,7 @@ const Navbar = () => {
                         alt="โปรไฟล์"
                         width={40}
                         height={40}
-                        className="rounded-full w-10 h-10 object-contain"
+                        className="rounded-full object-cover"
                       />
                     ) : (
                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
@@ -268,10 +256,10 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuSeparator />
-                  {pathName === `/profile/${session.user.id}` && (
+                  {pathname === `/profile/${session.user.id}` && (
                     <DropdownMenuItem
                       onClick={() =>
-                        route.push(`/profile/${session.user.id}/setting`)
+                        router.push(`/profile/${session.user.id}/setting`)
                       }
                       className="p-2 cursor-pointer rounded-md"
                     >

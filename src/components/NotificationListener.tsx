@@ -1,53 +1,44 @@
+// NotificationListener.tsx
 "use client";
 
 import { useEffect } from "react";
-import { createClient } from "@supabase/supabase-js";
 import toast from "react-hot-toast";
-import { useSession } from "next-auth/react";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const STORAGE_COUNT_KEY = "unreadNotiCount";
+const STORAGE_MESSAGES_KEY = "unreadNotiMessages";
 
 export default function NotificationListener() {
-  const { data: session } = useSession();
-  const currentUserId = session?.user?.id;
-
   useEffect(() => {
-    // ✅ ต้องแน่ใจว่ามี session ก่อน
-    if (!session?.user?.id) return;
+    // ✅ โหลด noti จาก LocalStorage
+    const stored = localStorage.getItem(STORAGE_MESSAGES_KEY);
+    const messages: string[] = stored ? JSON.parse(stored) : [];
 
-    const currentUserId = session.user.id;
+    messages.forEach((msg) => {
+      toast(msg, { icon: "💬" });
+    });
 
-    const channel = supabase
-      .channel("global-messages")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        (payload) => {
-          const msg = payload.new;
+    // ✅ รับข้อความจาก Service Worker
+    const bc = new BroadcastChannel("fcm_channel");
 
-          if (
-            msg.target_id === currentUserId &&
-            msg.user_id !== currentUserId
-          ) {
-            toast(`${msg.username} ส่งข้อความมา: ${msg.content}`, {
-              icon: "💬",
-              duration: 4000,
-            });
-          }
-        }
-      )
-      .subscribe();
+    bc.onmessage = (event) => {
+      const { title, body } = event.data;
+      const msg = `${title}: ${body}`;
+
+      const prev = JSON.parse(
+        localStorage.getItem(STORAGE_MESSAGES_KEY) || "[]"
+      );
+      const updated = [...prev, msg];
+
+      localStorage.setItem(STORAGE_MESSAGES_KEY, JSON.stringify(updated));
+      localStorage.setItem(STORAGE_COUNT_KEY, updated.length.toString());
+
+      toast(msg, { icon: "💬" });
+    };
 
     return () => {
-      supabase.removeChannel(channel);
+      bc.close();
     };
-  }, [session]); // ✅ ให้ wait จน session มาครบ
+  }, []);
+
   return null;
 }
