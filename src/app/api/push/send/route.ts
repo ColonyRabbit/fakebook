@@ -1,23 +1,34 @@
-// /app/api/push/send/route.ts
-
 import { NextResponse } from "next/server";
-import admin from "firebase-admin";
+import admin, { ServiceAccount } from "firebase-admin";
 
-// 🔥 เอาค่า service account มาตรงนี้
-import path from "path";
-import { readFileSync } from "fs";
-
-// โหลด service account จากไฟล์ตรงๆ
-const serviceAccountPath = path.resolve(process.cwd(), "lib", "fakebook.json");
-const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf8"));
-
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-  });
-}
+let firebaseAdmin: typeof import("firebase-admin");
 
 export async function POST(req: Request) {
+  if (!firebaseAdmin) {
+    firebaseAdmin = await import("firebase-admin");
+
+    const serviceAccount = {
+      type: process.env.GOOGLE_TYPE,
+      project_id: process.env.GOOGLE_PROJECT_ID,
+      private_key_id: process.env.GOOGLE_PRIVATE_KEY_ID,
+      private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
+      client_email: process.env.GOOGLE_CLIENT_EMAIL,
+      client_id: process.env.GOOGLE_CLIENT_ID,
+      auth_uri: process.env.GOOGLE_AUTH_URI,
+      token_uri: process.env.GOOGLE_TOKEN_URI,
+      auth_provider_x509_cert_url: process.env.GOOGLE_AUTH_PROVIDER_CERT_URL,
+      client_x509_cert_url: process.env.GOOGLE_CLIENT_CERT_URL,
+    };
+
+    if (!firebaseAdmin.apps.length) {
+      firebaseAdmin.initializeApp({
+        credential: firebaseAdmin.credential.cert(
+          serviceAccount as admin.ServiceAccount
+        ),
+      });
+    }
+  }
+
   const { targetFcmToken, title, body } = await req.json();
 
   if (!targetFcmToken || !title || !body) {
@@ -25,7 +36,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const messaging = admin.messaging();
+    const messaging = firebaseAdmin.messaging();
 
     await messaging.send({
       token: targetFcmToken,
