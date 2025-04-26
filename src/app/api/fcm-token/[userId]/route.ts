@@ -8,11 +8,8 @@ const supabase = createClient(
 );
 
 // ⬇️ แก้ type context ให้ถูกต้อง
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { userId: string } }
-) {
-  const { userId } = params;
+export async function GET(request: Request, context: any) {
+  const { userId } = context.params;
 
   const { data, error } = await supabase
     .from("fcm_tokens")
