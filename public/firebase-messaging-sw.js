@@ -13,6 +13,7 @@ const dbPromise = idb.openDB("noti-db", 1, {
     });
   },
 });
+
 firebase.initializeApp({
   apiKey: "AIzaSyBCyuqws7ZsH5PSGU7BX0jBjXlLGGrACM4",
   authDomain: "fakebook-423cb.firebaseapp.com",
@@ -55,6 +56,7 @@ messaging.onBackgroundMessage(async function (payload) {
       body: notificationBody,
       timestamp: Date.now(),
     });
+    bc.close(); // <-- เพิ่มปิด channel ด้วย
   } catch (error) {
     console.error("Error handling background message:", error);
   }

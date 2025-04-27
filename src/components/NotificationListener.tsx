@@ -10,6 +10,13 @@ const STORAGE_MESSAGES_KEY = "unreadNotiMessages";
 export default function NotificationListener() {
   useEffect(() => {
     // ✅ โหลด noti จาก LocalStorage
+    navigator.serviceWorker
+      .getRegistration("/firebase-messaging-sw.js")
+      .then((registration) => {
+        if (!registration) {
+          navigator.serviceWorker.register("/firebase-messaging-sw.js");
+        }
+      });
     const stored = localStorage.getItem(STORAGE_MESSAGES_KEY);
     const messages: string[] = stored ? JSON.parse(stored) : [];
 
