@@ -233,7 +233,7 @@ const Feed = () => {
                   <>
                     {/* ✅ แสดงข้อความ + youtube embed ถ้ามี */}
                     {cleanText && (
-                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4">
+                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4 whitespace-pre-line">
                         {cleanText}
                       </p>
                     )}

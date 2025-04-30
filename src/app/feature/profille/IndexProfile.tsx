@@ -27,6 +27,8 @@ import usersApi from "../../service/usersApi";
 import { FullUser } from "../../type/userType";
 import FloatingChatWrapper from "../../../components/FloatingChatWrapper";
 import Link from "next/link";
+import postsApi from "../../service/postsApi";
+import Postslist from "./components/Postslist";
 
 const IndexProfile = ({ id }: { id: string }) => {
   const { data: session } = useSession();
@@ -291,6 +293,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                 </span>
               </div>
             </div>
+            <Postslist userId={id} />
             {user.posts?.length === 0 && (
               <div className="text-center py-12 text-gray-500">
                 <Activity className="w-12 h-12 mx-auto mb-4 opacity-50" />
