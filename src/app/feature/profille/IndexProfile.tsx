@@ -293,6 +293,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                 </span>
               </div>
             </div>
+            {/* posts list */}
             <Postslist userId={id} />
             {user.posts?.length === 0 && (
               <div className="text-center py-12 text-gray-500">

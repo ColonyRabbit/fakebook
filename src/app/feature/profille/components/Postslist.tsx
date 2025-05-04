@@ -196,7 +196,11 @@ export default function Postslist({ userId }: { userId: string }) {
                 </>
               )}
 
-              <PostCard post={post} />
+              <PostCard
+                post={post}
+                setPosts={setPosts}
+                setEditedImage={setEditedImage}
+              />
 
               {session?.user?.id === post.user?.id && (
                 <div className="flex gap-2 mb-4">
@@ -259,7 +263,7 @@ export default function Postslist({ userId }: { userId: string }) {
   );
 }
 
-export function PostCard({ post }) {
+export function PostCard({ post, setPosts, setEditedImage }) {
   const [showImageModal, setShowImageModal] = useState(false);
 
   return (
@@ -276,6 +280,20 @@ export function PostCard({ post }) {
               fill
               className="object-cover"
             />
+            <button
+              type="button"
+              onClick={() => {
+                setPosts((prev) =>
+                  prev.map((p) =>
+                    p.id === post.id ? { ...p, fileUrl: null } : p
+                  )
+                );
+                setEditedImage(null);
+              }}
+              className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           {showImageModal && (
