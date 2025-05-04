@@ -18,6 +18,7 @@ import postsApi from "../../../service/postsApi";
 import usePostsList from "../hooks/usePostsList";
 import { Card } from "../../../../../@/components/ui/card";
 import ButtonLike from "./ButtonLike";
+import LinkPreview from "../../../../components/LinkPreview";
 
 export default function Postslist({ userId }: { userId: string }) {
   const {
@@ -51,15 +52,24 @@ export default function Postslist({ userId }: { userId: string }) {
     setLoadingMore,
   } = usePostsList();
 
-  const [showImageModal, setShowImageModal] = useState(false);
+  function extractYouTubeEmbedUrl(text?: string): string | null {
+    if (!text) return null;
+    const match = text.match(
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/i
+    );
+    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
+  }
 
-  // ✅ โหลดโพสต์เมื่อ session และ page พร้อม
+  function extractUrls(text: string): string[] {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.match(urlRegex) || [];
+  }
+
   useEffect(() => {
     const fetchPosts = async () => {
       if (!session?.user?.id) return;
       try {
         const res = await postsApi.getYourPosts(userId, page, LIMIT);
-        console.log("res", res);
         setPosts((prev) => [...prev, ...res.posts]);
         setHasMore(res.pagination?.hasMore ?? false);
       } catch (err) {
@@ -73,7 +83,7 @@ export default function Postslist({ userId }: { userId: string }) {
 
     fetchPosts();
   }, [page]);
-  // ✅ Call fetchMorePosts when the last card comes into view
+
   useEffect(() => {
     if (!observerRef?.current || !hasMore) return;
 
@@ -94,35 +104,20 @@ export default function Postslist({ userId }: { userId: string }) {
     };
   }, [posts, observerRef, fetchMorePosts, hasMore]);
 
-  function extractYouTubeEmbedUrl(text?: string): string | null {
-    if (!text) return null;
-    const match = text.match(
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)([^\s&]+)/i
-    );
-    return match ? `https://www.youtube.com/embed/${match[1]}` : null;
-  }
-
-  function extractTextWithoutYouTubeUrl(text?: string): string {
-    if (!text) return "";
-    return text
-      .replace(
-        /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[^\s]+/i,
-        ""
-      )
-      .trim();
-  }
   return (
     <div className="p-6">
       {posts?.map((post, index) => {
         const isLast = index === posts.length - 1;
-
         const embedUrl = extractYouTubeEmbedUrl(post.content);
-        const cleanText = extractTextWithoutYouTubeUrl(post.content);
+        const urls = extractUrls(post.content);
+        const nonYoutubeUrls = urls.filter(
+          (u) => !u.includes("youtube.com") && !u.includes("youtu.be")
+        );
 
         return (
           <Card
             key={index}
-            ref={isLast ? observerRef : null} // ✅ ให้ observer เฝ้าเฉพาะ post สุดท้าย
+            ref={isLast ? observerRef : null}
             className="bg-white dark:bg-gray-800 hover:shadow-lg transition-all duration-200 transform hover:-translate-y-1 my-4"
           >
             <div className="p-6">
@@ -172,74 +167,12 @@ export default function Postslist({ userId }: { userId: string }) {
                     rows={4}
                     placeholder="What's on your mind?"
                   />
-                  {post.photoUrl && !editedImage && (
-                    <div className="relative w-full h-72 rounded-lg overflow-hidden">
-                      <Image
-                        src={post.photoUrl}
-                        alt="current"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  {editedImage && (
-                    <div className="relative w-full h-72 rounded-lg overflow-hidden">
-                      <Image
-                        src={URL.createObjectURL(editedImage)}
-                        alt="new"
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                      <ImagePlus className="h-4 w-4" />
-                      Change Image
-                    </Button>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      ref={fileInputRef}
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          setEditedImage(file);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                  </div>
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      onClick={() => handleSubmitEdit(post.id)}
-                      size="sm"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-                    >
-                      Save Changes
-                    </Button>
-                    <Button
-                      onClick={handleCancelEdit}
-                      variant="ghost"
-                      size="sm"
-                      className="text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
                 </div>
               ) : (
                 <>
-                  {/* ✅ แสดงข้อความ + youtube embed ถ้ามี */}
-                  {cleanText && (
-                    <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4 whitespace-pre-line">
-                      {cleanText}
-                    </p>
-                  )}
+                  <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4 whitespace-pre-line">
+                    {post.content}
+                  </p>
                   {embedUrl && (
                     <div
                       className="relative w-full mb-6"
@@ -255,31 +188,37 @@ export default function Postslist({ userId }: { userId: string }) {
                       />
                     </div>
                   )}
-
-                  <PostCard post={post} />
-                  {session?.user?.id === post.user?.id && (
-                    <div className="flex gap-2 mb-4">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(post.id, post.content)}
-                        className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
-                      >
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(post.id)}
-                        className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
+                  {nonYoutubeUrls.map((url, i) => (
+                    <div key={i} className="my-4">
+                      <LinkPreview url={url} />
                     </div>
-                  )}
+                  ))}
                 </>
+              )}
+
+              <PostCard post={post} />
+
+              {session?.user?.id === post.user?.id && (
+                <div className="flex gap-2 mb-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(post.id, post.content)}
+                    className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+                  >
+                    <Pencil className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(post.id)}
+                    className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
               )}
 
               {session && (
@@ -309,7 +248,8 @@ export default function Postslist({ userId }: { userId: string }) {
             </div>
           </Card>
         );
-      })}{" "}
+      })}
+
       {loadingMore && (
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />
@@ -318,6 +258,7 @@ export default function Postslist({ userId }: { userId: string }) {
     </div>
   );
 }
+
 export function PostCard({ post }) {
   const [showImageModal, setShowImageModal] = useState(false);
 
