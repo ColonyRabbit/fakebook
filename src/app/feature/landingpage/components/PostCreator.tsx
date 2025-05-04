@@ -227,11 +227,12 @@ export default function PostCreator() {
         {!isExpanded && (
           <div className="grid grid-cols-3 gap-1 mt-4 pt-4 border-t dark:border-gray-700">
             <Button
+              disabled={true}
               variant="ghost"
               className="flex items-center justify-center gap-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-gray-700 dark:text-gray-300"
             >
               <Camera className="h-5 w-5 text-red-500" />
-              <span>วิดีโอสด</span>
+              <span>วิดีโอสด (Soon)</span>
             </Button>
             <Button
               variant="ghost"
@@ -242,11 +243,12 @@ export default function PostCreator() {
               <span>รูปภาพ</span>
             </Button>
             <Button
+              disabled={true}
               variant="ghost"
               className="flex items-center justify-center gap-2 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 text-gray-700 dark:text-gray-300"
             >
               <Smile className="h-5 w-5 text-yellow-500" />
-              <span>ความรู้สึก</span>
+              <span>ความรู้สึก (Soon)</span>
             </Button>
           </div>
         )}

@@ -19,7 +19,25 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+export const metadata: Metadata = {
+  title: "Fakebook",
+  keywords: ["Fakebook", "Social Media", "Connect", "Share", "Memories"],
+  authors: [
+    {
+      name: "Fakebook Team",
+      url: "https://fakebook.com",
+    },
+  ],
+  creator: "Fakebook Team",
+  publisher: "Fakebook Team",
+  icons: {
+    icon: "/images/Logo.png",
+    shortcut: "/images/Logo.png",
+  },
 
+  description:
+    "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+};
 export default function RootLayout({
   children,
 }: Readonly<{

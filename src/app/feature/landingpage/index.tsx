@@ -13,8 +13,6 @@ const IndexLandingPage = () => {
           <Feed />
         </div>
       </div>
-
-      {/* Sidebar - fixed to right */}
       <aside className="fixed top-24 right-6 w-[260px] hidden xl:block">
         <SideBarUserList />
       </aside>
