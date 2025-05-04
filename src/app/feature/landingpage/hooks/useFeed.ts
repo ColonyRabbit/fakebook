@@ -8,9 +8,6 @@ const useFeed = () => {
   const LIMIT = 2;
   const { data: session } = useSession();
 
-  // ✅ STATE MANAGEMENT
-  const [isImageOpen, setIsImageOpen] = useState<boolean>(false);
-
   const [posts, setPosts] = useState<any>([]);
   const [initialLoading, setInitialLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -49,7 +46,6 @@ const useFeed = () => {
 
   useEffect(() => {
     fetchPosts();
-    console.log("posts>>>", posts);
   }, [fetchPosts]);
 
   // ✅ LOAD MORE (INFINITE SCROLL)
@@ -90,8 +86,11 @@ const useFeed = () => {
     const formData = new FormData();
     formData.append("postId", postId);
     formData.append("content", editedContent);
+
     if (editedImage) {
       formData.append("file", editedImage);
+    } else if (!editedImage && !posts.find((p) => p.id === postId)?.fileUrl) {
+      formData.append("file", "");
     }
 
     try {
@@ -115,6 +114,7 @@ const useFeed = () => {
       alert("ไม่สามารถแก้ไขโพสต์ได้");
     }
   };
+
   const handleSaveEdit = async (postId: string) => {
     try {
       await postsApi.updateOnePost(editedContent, postId);

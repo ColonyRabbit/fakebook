@@ -171,10 +171,24 @@ const Feed = () => {
                       <div className="relative w-full h-72 rounded-lg overflow-hidden">
                         <Image
                           src={post.fileUrl}
-                          alt="current"
+                          alt="edited preview"
                           fill
                           className="object-cover"
                         />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPosts((prev) =>
+                              prev.map((p) =>
+                                p.id === post.id ? { ...p, fileUrl: null } : p
+                              )
+                            );
+                            setEditedImage(null);
+                          }}
+                          className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                        >
+                          <X className="h-5 w-5" />
+                        </button>
                       </div>
                     )}
                     {editedImage && (
@@ -185,8 +199,15 @@ const Feed = () => {
                           fill
                           className="object-cover"
                         />
+                        <Button
+                          onClick={() => setEditedImage(null)}
+                          className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1"
+                        >
+                          <X className="h-5 w-5" />
+                        </Button>
                       </div>
                     )}
+
                     <div className="flex gap-3">
                       <Button
                         variant="outline"

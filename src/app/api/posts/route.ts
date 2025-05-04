@@ -145,7 +145,7 @@ export async function PATCH(request: Request) {
 
     const content = formData.get("content")?.toString();
     const postId = formData.get("postId")?.toString();
-    const file = formData.get("file") as File | null;
+    const file = formData.get("file");
 
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -155,14 +155,21 @@ export async function PATCH(request: Request) {
     const existingPost = await prisma.post.findUnique({
       where: { id: postId },
     });
+
     if (!existingPost)
       return NextResponse.json({ error: "Post not found" }, { status: 404 });
+
     if (existingPost.userId !== session.user.id)
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
     let fileUrl = existingPost.fileUrl;
 
-    let photoUrl = null;
+    // ✅ ถ้าผู้ใช้ต้องการลบรูป
+    if (typeof file === "string" && file === "") {
+      fileUrl = null;
+    }
+
+    // ✅ ถ้ามีรูปใหม่มา ให้ upload ขึ้น S3
     if (file instanceof File) {
       const fileName = `uploads/${Date.now()}-${file.name}`;
       const fileBuffer = Buffer.from(await file.arrayBuffer());
@@ -173,20 +180,26 @@ export async function PATCH(request: Request) {
           secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
         },
       });
+
       const params = {
         Bucket: process.env.AWS_S3_BUCKET,
         Key: fileName,
         Body: fileBuffer,
         ContentType: file.type,
       };
+
       const command = new PutObjectCommand(params);
       await s3Client.send(command);
+
       fileUrl = `${process.env.AWS_S3_URL}/${fileName}`;
     }
 
     const updatedPost = await prisma.post.update({
       where: { id: postId },
-      data: { content, fileUrl },
+      data: {
+        content,
+        fileUrl,
+      },
     });
 
     return NextResponse.json({ message: "Post updated", post: updatedPost });
