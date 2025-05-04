@@ -23,7 +23,14 @@ function extractTextWithoutYouTubeUrl(text: string): string {
     )
     .trim();
 }
-
+function isValidUrl(url: string): boolean {
+  try {
+    new URL(url);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
 export default function PostCreator() {
   const {
     content,
@@ -123,7 +130,19 @@ export default function PostCreator() {
                       className="prose prose-sm max-w-none dark:prose-invert"
                     />
                   )}
-
+                  {/*   URL Priview */}
+                  {isValidUrl(cleanText) && (
+                    <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <a
+                        href={cleanText}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline"
+                      >
+                        {cleanText}
+                      </a>
+                    </div>
+                  )}
                   {/* ✅ YouTube embed */}
                   {youtubeEmbedUrl ? (
                     <iframe

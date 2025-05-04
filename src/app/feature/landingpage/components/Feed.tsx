@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   MessageSquare,
   Share2,
-  ThumbsUp,
   Loader2,
   Pencil,
   Trash2,
@@ -18,6 +17,7 @@ import Allcomments from "./Allcomments";
 import ButtonLike from "./ButtonLike";
 import useFeed from "../hooks/useFeed";
 import { Card } from "../../../../../@/components/ui/card";
+import LinkPreview from "../../../../components/LinkPreview";
 
 // ✅ helper functions
 function extractYouTubeEmbedUrl(text: string): string | null {
@@ -27,13 +27,9 @@ function extractYouTubeEmbedUrl(text: string): string | null {
   return match ? `https://www.youtube.com/embed/${match[1]}` : null;
 }
 
-function extractTextWithoutYouTubeUrl(text: string): string {
-  return text
-    .replace(
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/watch\?v=|youtu\.be\/)[^\s]+/i,
-      ""
-    )
-    .trim();
+function extractUrls(text: string): string[] {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.match(urlRegex) || [];
 }
 
 const Feed = () => {
@@ -63,7 +59,6 @@ const Feed = () => {
   } = useFeed();
 
   const observerRef = useRef<HTMLDivElement | null>(null);
-
   useEffect(() => {
     if (!hasMore) return;
 
@@ -114,7 +109,10 @@ const Feed = () => {
           const isLast = index === posts.length - 1;
 
           const embedUrl = extractYouTubeEmbedUrl(post.content);
-          const cleanText = extractTextWithoutYouTubeUrl(post.content);
+          const urls = extractUrls(post.content);
+          const nonYoutubeUrls = urls.filter(
+            (u) => !u.includes("youtube.com") && !u.includes("youtu.be")
+          );
 
           return (
             <Card
@@ -204,9 +202,7 @@ const Feed = () => {
                         ref={fileInputRef}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) {
-                            setEditedImage(file);
-                          }
+                          if (file) setEditedImage(file);
                         }}
                         className="hidden"
                       />
@@ -231,12 +227,9 @@ const Feed = () => {
                   </div>
                 ) : (
                   <>
-                    {/* ✅ แสดงข้อความ + youtube embed ถ้ามี */}
-                    {cleanText && (
-                      <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4 whitespace-pre-line">
-                        {cleanText}
-                      </p>
-                    )}
+                    <p className="text-gray-700 dark:text-gray-300 text-lg leading-relaxed mb-4 whitespace-pre-line">
+                      {post.content}
+                    </p>
                     {embedUrl && (
                       <div
                         className="relative w-full mb-6"
@@ -252,6 +245,11 @@ const Feed = () => {
                         />
                       </div>
                     )}
+                    {nonYoutubeUrls.map((url, i) => (
+                      <div key={i} className="my-4">
+                        <LinkPreview url={url} />
+                      </div>
+                    ))}
 
                     <PostCard post={post} />
                     {session?.user?.id === post.user?.id && (
@@ -307,6 +305,7 @@ const Feed = () => {
             </Card>
           );
         })}
+
         {loadingMore && (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-8 w-8 animate-spin text-blue-600 dark:text-blue-400" />

@@ -33,6 +33,7 @@
     "framer-motion": "^12.6.3",
     "jsonwebtoken": "^9.0.2",
     "jwt": "^0.2.0",
+    "link-preview-js": "^3.0.14",
     "lucide-react": "^0.487.0",
     "next": "15.2.4",
     "next-auth": "^4.24.11",
