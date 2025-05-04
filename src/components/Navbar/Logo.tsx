@@ -8,7 +8,7 @@ const Logo = () => {
       <div className="relative w-full h-20">
         <Image
           className="object-cover"
-          src="/image/Fakebook.jpg"
+          src="/images/Fakebook.jpg"
           alt="fakebook"
           fill
           quality={100}
