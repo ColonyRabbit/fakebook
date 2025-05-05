@@ -21,6 +21,8 @@ const geistMono = Geist_Mono({
 });
 export const metadata: Metadata = {
   title: "Fakebook",
+  description:
+    "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
   keywords: ["Fakebook", "Social Media", "Connect", "Share", "Memories"],
   authors: [
     {
@@ -34,9 +36,9 @@ export const metadata: Metadata = {
     icon: "/images/Logo.png",
     shortcut: "/images/Logo.png",
   },
-
-  description:
-    "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+  verification: {
+    google: "TcywSLjr0baKqRMX6CwZ0gMBsHeIUfnXTQmEFrkqN8g",
+  },
 };
 export default function RootLayout({
   children,
