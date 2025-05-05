@@ -283,9 +283,14 @@ const Navbar = () => {
               </DropdownMenu>
             ) : (
               <div className="flex items-center gap-2">
-                <Link href="/login" className="text-white hover:bg-white/10">
-                  <LogIn className="h-4 w-4 mr-2" />
-                  เข้าสู่ระบบ
+                <Link href="/login">
+                  <Button
+                    variant="ghost"
+                    className="text-white hover:bg-white/10"
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    เข้าสู่ระบบ
+                  </Button>
                 </Link>
                 <Link href="/register">
                   <Button

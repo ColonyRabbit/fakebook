@@ -26,17 +26,18 @@ export const metadata: Metadata = {
   keywords: ["Fakebook", "Social Media", "Connect", "Share", "Memories"],
   authors: [
     {
-      name: "Fakebook Team",
-      url: "https://fakebook.com",
+      name: "Fakebook khanakorn alone",
+      url: "https://fakebook-psi-six.vercel.app/",
     },
   ],
-  creator: "Fakebook Team",
-  publisher: "Fakebook Team",
+  creator: "Fakebook khanakorn alone",
+  publisher: "Fakebook khanakorn alone",
   icons: {
     icon: "/images/Logo.png",
     shortcut: "/images/Logo.png",
   },
   verification: {
+    // ทำให้ google หาเจอ เมื่อ search
     google: "TcywSLjr0baKqRMX6CwZ0gMBsHeIUfnXTQmEFrkqN8g",
   },
 };
