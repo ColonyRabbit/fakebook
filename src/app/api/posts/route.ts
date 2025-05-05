@@ -164,12 +164,10 @@ export async function PATCH(request: Request) {
 
     let fileUrl = existingPost.fileUrl;
 
-    // ✅ ถ้าผู้ใช้ต้องการลบรูป
     if (typeof file === "string" && file === "") {
       fileUrl = null;
     }
 
-    // ✅ ถ้ามีรูปใหม่มา ให้ upload ขึ้น S3
     if (file instanceof File) {
       const fileName = `uploads/${Date.now()}-${file.name}`;
       const fileBuffer = Buffer.from(await file.arrayBuffer());

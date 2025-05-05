@@ -121,7 +121,7 @@ export default function IndexLogin() {
         <div className="text-center">
           <div className="flex justify-center bg-[#375b93] rounded-xl p-4">
             <Image
-              src="/image/Fakebook.jpg"
+              src="/images/Fakebook.jpg"
               alt="Logo"
               width={80}
               height={80}
