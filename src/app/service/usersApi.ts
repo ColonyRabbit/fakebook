@@ -5,7 +5,7 @@ const userApi = (() => {
   // ใช้ .env สำหรับ URL จริง (เช่น production)
   const clientBaseUrl = "/api";
   const serverBaseUrl =
-    process.env.NEXTAUTH_URL || "https://fakebook-psi-six.vercel.app/";
+    process.env.NEXTAUTH_URL || "https://fakebook-psi-six.vercel.app";
 
   const getOneUser = async (userId: string): Promise<FullUser> => {
     const res = await fetch(`${clientBaseUrl}/users/${userId}`, {
