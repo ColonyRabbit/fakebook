@@ -40,6 +40,9 @@ export const metadata: Metadata = {
     // ทำให้ google หาเจอ เมื่อ search
     google: "TcywSLjr0baKqRMX6CwZ0gMBsHeIUfnXTQmEFrkqN8g",
   },
+  other: {
+    "google-adsense-account": "ca-pub-1826317106054621",
+  },
 };
 export default function RootLayout({
   children,
