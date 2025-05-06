@@ -1,39 +1,42 @@
-import { Metadata, ResolvingMetadata } from "next";
-import userApi from "../../service/usersApi";
+import { icons } from "lucide-react";
 import IndexProfile from "../../feature/profille/IndexProfile";
+import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../../lib/authOptions";
+import userApi from "../../service/usersApi";
 
-// ✅ Type inferred จาก Next.js
-type Props = {
-  params: { id: string };
-};
-
-// ✅ ฟังก์ชันนี้ถูกต้องตาม Next.js 15
-export async function generateMetadata(
-  { params }: Props,
-  parent?: ResolvingMetadata
-): Promise<Metadata> {
-  const user = await userApi.getOneUserServerSide(params.id);
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const res = await userApi.getOneUserServerSide(params.id);
 
   return {
-    title: user.username,
-    description: "โปรไฟล์ผู้ใช้งาน",
+    title: `${res.username}`,
+    description:
+      "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
     icons: {
-      icon: user.photoUrl,
+      icon: res.photoUrl,
     },
     openGraph: {
-      title: user.username,
-      description: "โปรไฟล์ผู้ใช้งาน",
-      images: [{ url: user.photoUrl }],
+      title: `${res.username}`,
+      description:
+        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+      images: [
+        {
+          url: res.photoUrl,
+        },
+      ],
+      type: "website",
     },
     twitter: {
-      title: user.username,
-      description: "โปรไฟล์ผู้ใช้งาน",
-      images: [user.photoUrl],
+      card: "summary_large_image",
+      title: `${res.username}`,
+      description:
+        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+      images: [res.photoUrl],
     },
   };
 }
 
-// ✅ Page Component
-export default function Page({ params }: Props) {
-  return <IndexProfile id={params.id} />;
+export default function Page({ params }: { params: { id: string } }) {
+  const { id } = params;
+  return <IndexProfile id={id} />;
 }
