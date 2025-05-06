@@ -1,22 +1,25 @@
-import { icons } from "lucide-react";
-import IndexProfile from "../../feature/profille/IndexProfile";
-import { useSession } from "next-auth/react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/authOptions";
-import userApi from "../../service/usersApi";
+// app/(your-segment)/profile/[id]/page.tsx
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+import { Metadata } from "next";
+import userApi from "../../service/usersApi";
+import IndexProfile from "../../feature/profille/IndexProfile";
+
+interface Props {
+  params: { id: string };
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const res = await userApi.getOneUserServerSide(params.id);
 
   return {
-    title: `${res.username}`,
+    title: res.username,
     description:
       "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
     icons: {
       icon: res.photoUrl,
     },
     openGraph: {
-      title: `${res.username}`,
+      title: res.username,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
       images: [
@@ -28,7 +31,7 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     },
     twitter: {
       card: "summary_large_image",
-      title: `${res.username}`,
+      title: res.username,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
       images: [res.photoUrl],
@@ -36,7 +39,6 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
-  return <IndexProfile id={id} />;
+export default function Page({ params }: Props) {
+  return <IndexProfile id={params.id} />;
 }
