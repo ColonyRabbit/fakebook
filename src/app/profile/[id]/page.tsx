@@ -5,7 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import userApi from "../../service/usersApi";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
+export async function generateMetadata({ params }: { params: { id: any } }) {
   const res = await userApi.getOneUserServerSide(params.id);
 
   return {
