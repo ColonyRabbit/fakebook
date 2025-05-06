@@ -1,8 +1,6 @@
-// components/FloatingChat.tsx
 "use client";
 
-import { useState } from "react";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 import { globalStateChat } from "../app/store/globalStateChat";
 import { Button } from "../../@/components/ui/button";
 import { RealtimeChat } from "../../@/components/realtime-chat";
@@ -17,27 +15,44 @@ export default function FloatingChat({
   session: any;
   roomName: string;
 }) {
-  const { isChatOpen, toggleChat } = globalStateChat();
-  //use Pathname
+  const { toggleChat, closeChat, openChats } = globalStateChat();
+  const isOpen = openChats[targetUserId];
   const pathName = usePathname();
+
   return (
     <>
-      {pathName === "/" ? null : (
+      {pathName !== "/" && (
         <Button
-          onClick={toggleChat}
+          onClick={() => toggleChat(targetUserId)}
           className="bg-blue-600 text-white p-4 flex items-center gap-2 shadow-lg z-50"
         >
-          <MessageCircle size={24} /> <p>ส่งข้อความ</p>
+          <MessageCircle size={24} />
+          <span>ส่งข้อความ</span>
         </Button>
       )}
 
-      <div className="fixed bottom-0 right-24 w-96 h-[500px] bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
-        <RealtimeChat
-          targetUserId={targetUserId}
-          roomName={roomName}
-          session={session}
-        />
-      </div>
+      {isOpen && (
+        <div className="h-[500px] right-10 bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
+          <div className="flex justify-between items-center p-2 border-b dark:border-zinc-700">
+            <span className="font-semibold text-gray-800 dark:text-white">
+              แชท
+            </span>
+            <button
+              onClick={() => closeChat(targetUserId)}
+              className="text-gray-500 hover:text-red-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          <RealtimeChat
+            targetUserId={targetUserId}
+            roomName={roomName}
+            session={session}
+            onClose={() => closeChat(targetUserId)}
+          />
+        </div>
+      )}
     </>
   );
 }

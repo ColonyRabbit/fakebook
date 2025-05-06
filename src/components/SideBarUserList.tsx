@@ -5,21 +5,13 @@ import Image from "next/image";
 import { useSession } from "next-auth/react";
 import userApi from "../app/service/usersApi";
 import FloatingChatWrapper from "./FloatingChatWrapper";
-import Link from "next/link";
+import { globalStateChat } from "../app/store/globalStateChat";
 
 const SideBarUserList: React.FC = () => {
   const { data: session } = useSession();
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [followerList, setFollowerList] = useState<any[]>([]);
-  const [openChatUserIds, setOpenChatUserIds] = useState<string[]>([]);
-
-  const toggleChat = (userId: string) => {
-    setOpenChatUserIds((prev) =>
-      prev.includes(userId)
-        ? prev.filter((id) => id !== userId)
-        : [...prev, userId]
-    );
-  };
+  const { toggleChat, openChats } = globalStateChat();
 
   useEffect(() => {
     const fetchUserFollowers = async () => {
@@ -30,10 +22,7 @@ const SideBarUserList: React.FC = () => {
         const followings = userData.following?.map(
           (relation: any) => relation.following
         );
-        const followers = userData.followers?.map(
-          (relation: any) => relation.follower
-        );
-        setFollowerList([...(followings || [])]);
+        setFollowerList(followings || []);
       } catch (error) {
         console.error("Error fetching followers:", error);
       } finally {
@@ -46,10 +35,7 @@ const SideBarUserList: React.FC = () => {
 
   return (
     <>
-      <nav
-        className="w-full border-b drop-shadow-black
-       border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-8 px-4"
-      >
+      <nav className="w-full border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 py-8 px-4">
         <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-3">
           คนที่คุณติดตาม
         </h2>
@@ -94,16 +80,28 @@ const SideBarUserList: React.FC = () => {
           )}
         </ul>
       </nav>
-      {openChatUserIds.map((userId) => {
+
+      {Object.keys(openChats).map((userId, index) => {
         const user = followerList.find((u) => u.id === userId);
+        if (!user || !openChats[userId]) return null;
+
+        const chatWidth = 320;
+        const gap = 16;
+        const rightOffset = gap + index * (chatWidth + gap);
+
         return (
-          user && (
-            <FloatingChatWrapper
-              key={user.id}
-              session={session}
-              targetUserId={user.id}
-            />
-          )
+          <div
+            key={user.id}
+            style={{
+              position: "fixed",
+              bottom: 16,
+              right: rightOffset,
+              zIndex: 50,
+              width: chatWidth,
+            }}
+          >
+            <FloatingChatWrapper session={session} targetUserId={user.id} />
+          </div>
         );
       })}
     </>
