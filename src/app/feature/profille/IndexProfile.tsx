@@ -71,7 +71,7 @@ const IndexProfile = ({ id }: { id: string }) => {
     };
 
     fetchData();
-  }, [session, id]);
+  }, []);
 
   const handleFollow = async (targetUserId: string) => {
     try {

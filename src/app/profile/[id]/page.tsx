@@ -4,11 +4,11 @@ import { Metadata } from "next";
 import userApi from "../../service/usersApi";
 import IndexProfile from "../../feature/profille/IndexProfile";
 
-interface Props {
+export async function generateMetadata({
+  params,
+}: {
   params: { id: string };
-}
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+}): Promise<Metadata> {
   const res = await userApi.getOneUserServerSide(params.id);
 
   return {
@@ -22,11 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: res.username,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
-      images: [
-        {
-          url: res.photoUrl,
-        },
-      ],
+      images: [{ url: res.photoUrl }],
       type: "website",
     },
     twitter: {
@@ -39,6 +35,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function Page({ params }: Props) {
+// ✅ หน้านี้สามารถใช้ interface ได้
+interface PageProps {
+  params: { id: string };
+}
+
+export default function Page({ params }: PageProps) {
   return <IndexProfile id={params.id} />;
 }
