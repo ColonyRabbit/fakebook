@@ -18,6 +18,7 @@ export async function generateMetadata() {
       title: `${session.user.name}`,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+      url: `https://fakebook.com/profile/${session.user.id}`,
       images: [
         {
           url: session.user.photoUrl,
