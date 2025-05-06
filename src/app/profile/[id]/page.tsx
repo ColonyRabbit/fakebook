@@ -12,7 +12,9 @@ interface PageProps {
 // ✅ generateMetadata รับ PageProps
 export async function generateMetadata({
   params,
-}: PageProps): Promise<Metadata> {
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
   const user = await userApi.getOneUserServerSide(params.id);
 
   return {
@@ -35,6 +37,6 @@ export async function generateMetadata({
 }
 
 // ✅ Page component รับ PageProps เช่นกัน
-export default function Page({ params }: PageProps) {
+export default function Page({ params }: { params: { id: string } }) {
   return <IndexProfile id={params.id} />;
 }
