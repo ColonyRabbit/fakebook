@@ -1,24 +1,42 @@
-// src/app/profile/[id]/page.tsx
-import { Metadata } from "next";
+import { icons } from "lucide-react";
 import IndexProfile from "../../feature/profille/IndexProfile";
+import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../../lib/authOptions";
+import userApi from "../../service/usersApi";
 
-type PageProps = {
-  params: {
-    id: string;
-  };
-};
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const res = await userApi.getOneUserServerSide(params.id);
 
-// แก้ไขฟังก์ชัน generateMetadata
-export async function generateMetadata({
-  params,
-}: PageProps): Promise<Metadata> {
   return {
-    title: `Profile of ${params.id}`,
-    description: "User profile page",
+    title: `${res.username}`,
+    description:
+      "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+    icons: {
+      icon: res.photoUrl,
+    },
+    openGraph: {
+      title: `${res.username}`,
+      description:
+        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+      images: [
+        {
+          url: res.photoUrl,
+        },
+      ],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${res.username}`,
+      description:
+        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+      images: [res.photoUrl],
+    },
   };
 }
 
-// ฟังก์ชันแสดงหน้าจอ
-export default async function Page({ params }: PageProps) {
-  return <IndexProfile id={params.id} />;
+export default function Page({ params }: { params: { id: string } }) {
+  const { id } = params;
+  return <IndexProfile id={id} />;
 }
