@@ -243,6 +243,7 @@ const IndexProfile = ({ id }: { id: string }) => {
                     {isFollowing ? "ยกเลิกการติดตาม" : "ติดตาม"}
                   </Button>
                   <FloatingChatWrapper
+                    className="fixed bottom-6 right-6 w-96"
                     session={session}
                     targetUserId={user.id}
                   />

@@ -10,10 +10,12 @@ export default function FloatingChat({
   session,
   roomName,
   targetUserId,
+  className,
 }: {
   targetUserId: string;
   session: any;
   roomName: string;
+  className?: string;
 }) {
   const { toggleChat, closeChat, openChats } = globalStateChat();
   const isOpen = openChats[targetUserId];
@@ -32,7 +34,9 @@ export default function FloatingChat({
       )}
 
       {isOpen && (
-        <div className="h-[500px] right-10 bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden">
+        <div
+          className={`h-[500px] right-10 bg-white dark:bg-zinc-900 border rounded-lg shadow-xl z-50 overflow-hidden ${className}`}
+        >
           <div className="flex justify-between items-center p-2 border-b dark:border-zinc-700">
             <span className="font-semibold text-gray-800 dark:text-white">
               แชท
