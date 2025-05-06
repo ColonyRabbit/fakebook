@@ -1,6 +1,5 @@
-import { icons } from "lucide-react";
+// src/app/profile/[id]/page.tsx
 import IndexProfile from "../../feature/profille/IndexProfile";
-import { useSession } from "next-auth/react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import userApi from "../../service/usersApi";
@@ -36,7 +35,6 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  const { id } = params;
-  return <IndexProfile id={id} />;
+export default async function Page({ params }: { params: { id: string } }) {
+  return <IndexProfile id={params.id} />;
 }
