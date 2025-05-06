@@ -1,42 +1,40 @@
-import { icons } from "lucide-react";
-import IndexProfile from "../../feature/profille/IndexProfile";
-import { useSession } from "next-auth/react";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../../../lib/authOptions";
+import { Metadata } from "next";
 import userApi from "../../service/usersApi";
+import IndexProfile from "../../feature/profille/IndexProfile";
 
-export async function generateMetadata({ params }: { params: { id: any } }) {
-  const res = await userApi.getOneUserServerSide(params.id);
+// ✅ ประกาศ props ให้ถูกต้อง
+interface PageProps {
+  params: {
+    id: string;
+  };
+}
+
+// ✅ generateMetadata รับ PageProps
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  const user = await userApi.getOneUserServerSide(params.id);
 
   return {
-    title: `${res.username}`,
-    description:
-      "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
+    title: user.username,
+    description: "โปรไฟล์ผู้ใช้งาน",
     icons: {
-      icon: res.photoUrl,
+      icon: user.photoUrl,
     },
     openGraph: {
-      title: `${res.username}`,
-      description:
-        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
-      images: [
-        {
-          url: res.photoUrl,
-        },
-      ],
-      type: "website",
+      title: user.username,
+      description: "โปรไฟล์ผู้ใช้งาน",
+      images: [{ url: user.photoUrl }],
     },
     twitter: {
-      card: "summary_large_image",
-      title: `${res.username}`,
-      description:
-        "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
-      images: [res.photoUrl],
+      title: user.username,
+      description: "โปรไฟล์ผู้ใช้งาน",
+      images: [user.photoUrl],
     },
   };
 }
 
-export default function Page({ params }: { params: any }) {
-  const { id } = params;
-  return <IndexProfile id={id} />;
+// ✅ Page component รับ PageProps เช่นกัน
+export default function Page({ params }: PageProps) {
+  return <IndexProfile id={params.id} />;
 }
