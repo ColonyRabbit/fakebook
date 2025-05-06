@@ -1,20 +1,17 @@
-import { Metadata } from "next";
+import { Metadata, ResolvingMetadata } from "next";
 import userApi from "../../service/usersApi";
 import IndexProfile from "../../feature/profille/IndexProfile";
 
-// ✅ ประกาศ props ให้ถูกต้อง
-interface PageProps {
-  params: {
-    id: string;
-  };
-}
-
-// ✅ generateMetadata รับ PageProps
-export async function generateMetadata({
-  params,
-}: {
+// ✅ Type inferred จาก Next.js
+type Props = {
   params: { id: string };
-}): Promise<Metadata> {
+};
+
+// ✅ ฟังก์ชันนี้ถูกต้องตาม Next.js 15
+export async function generateMetadata(
+  { params }: Props,
+  parent?: ResolvingMetadata
+): Promise<Metadata> {
   const user = await userApi.getOneUserServerSide(params.id);
 
   return {
@@ -36,7 +33,7 @@ export async function generateMetadata({
   };
 }
 
-// ✅ Page component รับ PageProps เช่นกัน
-export default function Page({ params }: { params: { id: string } }) {
+// ✅ Page Component
+export default function Page({ params }: Props) {
   return <IndexProfile id={params.id} />;
 }
