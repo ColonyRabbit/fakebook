@@ -3,35 +3,35 @@ import IndexProfile from "../../feature/profille/IndexProfile";
 import { useSession } from "next-auth/react";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
+import userApi from "../../service/usersApi";
 
-export async function generateMetadata() {
-  const session = await getServerSession(authOptions);
+export async function generateMetadata({ params }: { params: { id: string } }) {
+  const res = await userApi.getOneUserServerSide(params.id);
 
   return {
-    title: `${session.user.name}`,
+    title: `${res.username}`,
     description:
       "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
     icons: {
-      icon: session.user.photoUrl,
+      icon: res.photoUrl,
     },
     openGraph: {
-      title: `${session.user.name}`,
+      title: `${res.username}`,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
-      url: `https://fakebook.com/profile/${session.user.id}`,
       images: [
         {
-          url: session.user.photoUrl,
+          url: res.photoUrl,
         },
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `${session.user.name}`,
+      title: `${res.username}`,
       description:
         "เชื่อมต่อ แบ่งปัน และสร้างความทรงจำกับเพื่อนๆ ของคุณบนแพลตฟอร์มโซเชียลมีเดียที่ปลอดภัยและเป็นมิตร",
-      images: [session.user.photoUrl],
+      images: [res.photoUrl],
     },
   };
 }
