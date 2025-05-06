@@ -1,17 +1,17 @@
 // service/postsApi.ts
-
-import { T } from "framer-motion/dist/types.d-B50aGbjN";
-import { IRequestPostType, IResponsePostsType } from "../type/postType";
-
 const postsApi = (() => {
   const apiBaseUrl = "/api";
   // GET: ควรระบุ Promise<T> ชัดเจนเพื่อให้ type ปลอดภัย
-  const getAllPosts = async (page: number, limit: number): Promise<any> => {
+  const getAllPosts = async (
+    page: number,
+    limit: number
+  ): Promise<GetAllPostsResponse> => {
     const res = await fetch(`/api/posts?page=${page}&limit=${limit}`);
     if (!res.ok) throw new Error("Failed to fetch posts");
     const data = await res.json();
-    return data as any;
+    return data as GetAllPostsResponse;
   };
+
   const getYourPosts = async (
     userId: string,
     page: number,

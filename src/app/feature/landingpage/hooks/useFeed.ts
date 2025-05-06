@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import postsApi from "../../../service/postsApi";
 import toast from "react-hot-toast";
 import { useSession } from "next-auth/react";
-import { Post } from "../../../type/postType";
 
 const useFeed = () => {
   const LIMIT = 2;
@@ -29,7 +28,7 @@ const useFeed = () => {
   const fetchPosts = useCallback(async () => {
     try {
       const response = await postsApi.getAllPosts(page, LIMIT);
-
+      console.log("response>>>", response);
       setPosts((prev) => [...prev, ...response.posts]);
       setHasMore(response.pagination.hasMore);
     } catch (err) {

@@ -2,12 +2,15 @@ import { ThumbsUp } from "lucide-react";
 import React from "react";
 import toast from "react-hot-toast";
 import { Button } from "../../../../components/ui/button";
+import { Tooltip } from "react-tooltip";
+import "react-tooltip/dist/react-tooltip.css";
 
 interface ButtonLikeProps {
   post: {
     id: string;
     isLiked: boolean;
     likeCount: number;
+    likes?: { user: { username: string } }[];
   };
   session: any;
   likeInProgress: string | null;
@@ -64,17 +67,32 @@ const ButtonLike: React.FC<ButtonLikeProps> = ({
       setLikeInProgress(null);
     }
   };
+
+  const tooltipId = `like-tooltip-${post.id}`;
+  const likedUsernames =
+    post.likes?.length &&
+    post.likes.map((like) => like.user.username).join("\n");
+
+  // const likedUsernames =
+  //   post.likes?.length &&
+  //   post.likes.map((like) => like.user.username).join(", ");
+
   return (
-    <Button
-      onClick={() => handleLike(post.id)}
-      disabled={!session || likeInProgress === post.id}
-      className={`flex items-center gap-2 text-sm font-medium transition-colors ${
-        post.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
-      }`}
-    >
-      <ThumbsUp className={`h-5 w-5 ${post.isLiked ? "fill-current" : ""}`} />
-      <span>{post.likeCount}</span>
-    </Button>
+    <>
+      <Button
+        onClick={() => handleLike(post.id)}
+        disabled={!session || likeInProgress === post.id}
+        className={`flex items-center gap-2 text-sm font-medium transition-colors ${
+          post.isLiked ? "text-blue-600" : "text-gray-500 hover:text-blue-600"
+        }`}
+        data-tooltip-id={tooltipId}
+        data-tooltip-content={likedUsernames || "ยังไม่มีใครกดไลค์"}
+      >
+        <ThumbsUp className={`h-5 w-5 ${post.isLiked ? "fill-current" : ""}`} />
+        <span>{post.likeCount}</span>
+      </Button>
+      <Tooltip id={tooltipId} place="top" style={{ whiteSpace: "pre-line" }} />
+    </>
   );
 };
 

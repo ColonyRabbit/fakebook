@@ -1,38 +1,30 @@
-// types/post.ts
-//Res
-export interface User {
+interface Post {
   id: string;
-  username: string;
-  email: string;
-  photoUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Post {
-  id: string;
-  photoUrl: string;
   content: string;
   createdAt: string;
   updatedAt: string;
   userId: string;
-  user: Omit<User, "password">;
+  user: {
+    id: string;
+    username: string;
+    photoUrl?: string;
+  };
   likeCount: number;
   isLiked: boolean;
-  comments: string;
+  comments: number;
+  fileUrl?: string;
+  likes: { user: { username: string } }[];
 }
 
-export interface IResponsePostsType {
-  posts: Post[];
-  pagination: {
-    page: number;
-    limit: number;
-    totalPosts: number;
-    totalPages: number;
-  };
+interface Pagination {
+  page: number;
+  limit: number;
+  totalPosts: number;
+  totalPages: number;
+  hasMore: boolean;
 }
-//Req
-export interface IRequestPostType {
-  content: string;
-  userId: string;
+
+interface GetAllPostsResponse {
+  posts: Post[];
+  pagination: Pagination;
 }

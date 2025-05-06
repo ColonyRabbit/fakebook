@@ -24,12 +24,16 @@ export async function GET(request: Request) {
       include: {
         user: true,
         _count: { select: { likes: true, comments: true } },
-        likes: session?.user?.id
-          ? {
-              where: { userId: session.user.id },
-              select: { userId: true },
-            }
-          : undefined,
+        likes: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -43,9 +47,10 @@ export async function GET(request: Request) {
       user: post.user,
       photoUrl: post.user.photoUrl,
       likeCount: post._count.likes,
-      isLiked: !!post.likes?.length,
+      isLiked: post.likes.some((like) => like.userId === session?.user?.id),
       comments: post._count.comments,
       fileUrl: post.fileUrl,
+      likes: post.likes, // ✅ ใส่ไว้เพื่อส่งไปยัง client
     }));
 
     return NextResponse.json({
