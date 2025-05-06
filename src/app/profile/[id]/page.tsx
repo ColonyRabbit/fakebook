@@ -1,11 +1,16 @@
-// src/app/profile/[id]/page.tsx
 import IndexProfile from "../../feature/profille/IndexProfile";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../../../../lib/authOptions";
 import userApi from "../../service/usersApi";
 
-export async function generateMetadata({ params }: { params: { id: string } }) {
-  const res = await userApi.getOneUserServerSide(params.id);
+// ปรับ generateMetadata ให้ await params
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const res = await userApi.getOneUserServerSide(id);
 
   return {
     title: `${res.username}`,
@@ -35,6 +40,12 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
   };
 }
 
-export default async function Page({ params }: { params: { id: string } }) {
-  return <IndexProfile id={params.id} />;
+// ปรับ Page component ให้ await params
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  return <IndexProfile id={id} />;
 }
