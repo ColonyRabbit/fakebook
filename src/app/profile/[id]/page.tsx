@@ -1,14 +1,11 @@
-// src/app/profile/[id]/page.tsx
-
-import { Metadata } from "next";
-import userApi from "../../service/usersApi";
+import { icons } from "lucide-react";
 import IndexProfile from "../../feature/profille/IndexProfile";
+import { useSession } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "../../../../lib/authOptions";
+import userApi from "../../service/usersApi";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { id: string };
-}): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }) {
   const res = await userApi.getOneUserServerSide(params.id);
 
   return {
@@ -39,6 +36,7 @@ export async function generateMetadata({
   };
 }
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <IndexProfile id={params.id} />;
+export default function Page({ params }: { params: any }) {
+  const { id } = params;
+  return <IndexProfile id={id} />;
 }
